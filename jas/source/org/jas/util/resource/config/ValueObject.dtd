@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<!--DTD for value object xml, used to create value object bean -->
+<!ELEMENT root (class_name, class_description, create_date,
+                package_define, import_class_define, author,
+                version, serializable, constructor, tostring, columns)>
+
+<!ELEMENT class_name (#PCDATA)>
+<!ELEMENT class_description (#PCDATA)>
+<!ELEMENT create_date (#PCDATA)>
+<!ELEMENT package_define (#PCDATA)>
+
+<!ELEMENT import_class_define (item+)>
+<!ELEMENT item (#PCDATA)>
+
+<!ELEMENT author (#PCDATA)>
+<!ELEMENT version (#PCDATA)>
+<!ELEMENT serializable EMPTY>
+<!ELEMENT constructor EMPTY>
+
+<!ELEMENT tostring EMPTY>
+
+<!ELEMENT columns (column+)>
+<!ELEMENT column (name, type, default, comment, getter, setter)>
+
+<!-- column sub item definition -->
+<!ELEMENT name (#PCDATA)>
+<!ELEMENT type (#PCDATA)>
+<!ELEMENT default (#PCDATA)>
+<!ELEMENT comment (#PCDATA)>
+<!ELEMENT getter EMPTY>
+<!ELEMENT setter EMPTY>
+
+

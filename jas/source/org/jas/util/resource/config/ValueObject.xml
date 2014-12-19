@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?xml-stylesheet type="text/xsl" href="ValueObject.xsl"?>
+<root>
+	<class_name>TestData</class_name>
+	<class_description>this is a test</class_description>
+	<create_date>2002/11/08</create_date>
+	<package_define>package test.sample;</package_define>
+	<import_class_define>
+		<item>import java.io.Serializable;</item>
+		<item>import java.util.Timestamp;</item>
+	</import_class_define>
+	<author>張　学軍</author>
+	<version>1.0</version>
+	<serializable/>
+	<constructor/>
+	<tostring/>
+	<columns>
+		<column>
+			<name>name</name>
+			<type>String</type>
+			<default>null</default>
+			<comment>名前</comment>
+			<getter/>
+			<setter/>
+		</column>
+		<column>
+			<name>birth</name>
+			<type>Timestamp</type>
+			<default>null</default>
+			<comment>誕生日</comment>
+			<getter/>
+			<setter/>
+		</column>
+	</columns>
+</root>

@@ -1,0 +1,27 @@
+MCSTC001E=There are fields that must be input. (%1)
+MCSTC002E=Opeartion failed. (%1)
+MCSTC003E=Template format error. (%1)
+MCSTC004Q=The copied data rows are more than the destination, process continue?
+MCSTC005E=Invalidity connection name (%1)
+MCSTC006E=The (%2) can not be included in (%1)
+MCSTC007Q=Do you sure to delete it?
+MCSTC008E=invalidy input format. (%1)
+MCSTC009E=the record has been deleted by another
+MCSTC010E=the encode does not exist. (%1)
+MCSTC011Q=clear all filter and sort?
+MCSTC012Q=change connection?
+MCSTC013Q=close connection?
+MCSTC014I=total records %1
+MCSTC015I=not found the data
+MCSTC016Q=error occured (%1), continue?
+MCSTC017Q=%1 will be inserted from %2 to %3 , continue?
+MCSTC018Q=delete all the table data by filter, continue?
+
+MCSTC201E=Can not connect to database. (%1)
+MCSTC202E=Database execute error. (%1)
+
+MCSTC301I=File Successfully created
+
+FONT_SAMPL=AaBbCcDd
+
+AUTHOR_NAME=Zhang XueJun

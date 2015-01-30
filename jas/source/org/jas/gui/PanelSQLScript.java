@@ -467,11 +467,11 @@ public class PanelSQLScript extends JSplitPane {
 				PJTableRowHeaderModel rowHeaderModel = new PJTableRowHeaderModel(rowHeader, data);
 				rowHeader.setModel(rowHeaderModel);
 
-				if (data != null && data.size() > 3) {
+				if (data != null && data.size() > 4) {
 					rowHeaderModel.resetTable();
 					rowHeader.getColumnModel().getColumn(0).setCellRenderer(new PJDBDataTableRowHeaderRender());
 					dataModel.resetTable();
-					Main.getMDIMain().setStatusText((data.size() - 4) + " rows returned: " + executeTime + " ms");
+					Main.getMDIMain().setStatusText((data.size() - 5) + " rows returned: " + executeTime + " ms");
 				}
 			} else if (value instanceof Integer) {
 				int affectRows = ((Integer) value).intValue();

@@ -2,6 +2,7 @@ package org.jas.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Dimension;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.HashMap;
@@ -42,11 +43,12 @@ public class PanelSQLBrowser extends JPanel {
 		this.setLayout(borderLayoutMain);
 		this.add(dataMainSplitPane, BorderLayout.CENTER);
 		dataMainSplitPane.setVisible(true);
-		dataMainSplitPane.setDividerLocation(200);
+		//dataMainSplitPane.setDividerLocation(200);
 		dataMainSplitPane.setBorder(borderMainSplit);
 		dataMainSplitPane.setDividerSize(5);
 		dataMainSplitPane.setLeftComponent(leftPanel);
 		dataMainSplitPane.setRightComponent(rightPanel);
+        dataMainSplitPane.setPreferredSize(new Dimension(200, dataMainSplitPane.getHeight()));
 	}
 
 	void initUI() {
@@ -119,6 +121,7 @@ public class PanelSQLBrowser extends JPanel {
 	 */
 	public void showRightPanel(PanelRight newPanel) {
 		dataMainSplitPane.setRightComponent(newPanel);
+        dataMainSplitPane.setDividerLocation(dataMainSplitPane.getDividerLocation());
 	}
 
 	/**

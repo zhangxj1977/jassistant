@@ -155,6 +155,7 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 	int lastEditedRow = -1;
 	int lastInsertRow = -1;
 
+	static boolean isShowComment = false;
 
 	public PanelTableModify() {
 		try {
@@ -252,12 +253,14 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
         toolBarTop.add(separator, null);
 		toolBarTop.add(chkShowComment, null);
 		toolBarTop.setFloatable(false);
+		chkShowComment.setSelected(isShowComment);
 		chkShowComment.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				TableModel model = tableDBTable.getModel();
 				int selRow = tableDBTable.getSelectedRow();
 				int selCol = tableDBTable.getSelectedColumn();
 				if (model instanceof DBTableModel) {
+				    isShowComment = chkShowComment.isSelected();
 					((DBTableModel) model).isShowComment = chkShowComment.isSelected();
 					tableDBTable.setModel(((DBTableModel) model).copy());
 					((DBTableModel) model).resetTable();
@@ -451,7 +454,7 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 			PJTableRowHeaderModel rowHeaderModel = new PJTableRowHeaderModel(rowHeader, data);
 			rowHeader.setModel(rowHeaderModel);
 			DBTableModel dataModel = new DBTableModel(tableDBTable, rowHeader, data, tableType, showColumnFlags);
-			dataModel.isShowComment = chkShowComment.isSelected();
+			dataModel.isShowComment = isShowComment;
 			tableDBTable.setModel(dataModel);
 
 			if (data != null && data.size() > 3) {
@@ -1498,7 +1501,7 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 		DialogSaveTableData dialogSaveTableData = new DialogSaveTableData();
 		dialogSaveTableData.addParamTransferListener(this);
 		dialogSaveTableData.initResources(tableName);
-		dialogSaveTableData.setShowComment(chkShowComment.isSelected());
+		dialogSaveTableData.setShowComment(isShowComment);
 		dialogSaveTableData.setVisible(true);
 		dialogSaveTableData.removeParamTransferListener(this);
 	}

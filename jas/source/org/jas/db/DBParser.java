@@ -66,7 +66,7 @@ public class DBParser {
 			rs = dbMetaData.getTables(null, null, null, PJConst.TABLE_TYPES);
 		}
 
-		ArrayList tableList = new ArrayList();
+		ArrayList<TableDefineData> tableList = new ArrayList<TableDefineData>();
 		while (rs.next()) {
 			TableDefineData tableData = new TableDefineData();
 
@@ -85,12 +85,53 @@ public class DBParser {
 			tableList.add(tableData);
 		}
 
+        HashMap<String, String> commentMap = null;
+        if (isDB(dbMetaData, "Oracle")) {
+            commentMap = getOracleTableComments(conn);
+        } else if (isDB(dbMetaData, "IBM ")) {
+            commentMap = getDB2TableComments(conn);
+        }
+        if (commentMap != null) {
+            for (TableDefineData tableData : tableList) {
+                String comment = commentMap.get(tableData.getTableName().toUpperCase());
+                tableData.setComment(comment);
+            }
+        }
+
 		if (rs != null) {
 			rs.close();
 		}
 
 		return tableList;
 	}
+
+    private static HashMap<String, String> getDB2TableComments(
+            Connection conn) throws SQLException {
+        HashMap<String, String> resultMap = new HashMap<String, String>();
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("select tabschema, tabname, remarks from syscat.tables where remarks is not null");
+        while (rs.next()) {
+            resultMap.put((rs.getString("tabschema").trim() + "." + rs.getString("tabname")).toUpperCase(), rs.getString("remarks"));
+        }
+        rs.close();
+        stmt.close();
+
+        return resultMap;
+    }
+
+    private static HashMap<String, String> getOracleTableComments(
+            Connection conn) throws SQLException {
+        HashMap<String, String> resultMap = new HashMap<String, String>();
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("select table_name, comments from user_tab_comments where comments is not null");
+        while (rs.next()) {
+            resultMap.put(rs.getString("table_name").toUpperCase(), rs.getString("comments"));
+        }
+        rs.close();
+        stmt.close();
+
+        return resultMap;
+    }
 
     /**
      *

@@ -1,7 +1,6 @@
 package org.jas.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Point;
@@ -22,7 +21,9 @@ import java.util.Collection;
 import java.util.HashMap;
 
 import javax.swing.BorderFactory;
+import javax.swing.DefaultListCellRenderer;
 import javax.swing.ImageIcon;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -90,8 +91,10 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 	JPanel panelTop = new JPanel();
 	BorderLayout borderLayout1 = new BorderLayout();
 	JComboBox cmbConnectionURL = new JComboBox();
-	JToolBar toolBarTables = new JToolBar();
+	JToolBar toolBarTablesTop = new JToolBar();
+	JToolBar toolBarTablesBottom = new JToolBar();
 	RollOverButton btnTablesFilter = new RollOverButton();
+    JCheckBox chkShowComment = new JCheckBox("論理名表示");   
     ImageIcon iconSearchTable = ImageManager.createImageIcon("editonerow.gif");
     JTextField txtSearchTable = new JTextField();
     RollOverButton btnSearchTable = new RollOverButton();
@@ -99,6 +102,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 	HashMap hideTableItems = new HashMap();
 	PanelRight lastSelectTable = null;
 	PanelRight lastSelectView = null;
+	static boolean isShowComment = false;
 
 	public PanelTableList() {
 		try {
@@ -124,6 +128,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 				listTableNames_SelectChanged(e);
 			}
 		});
+		listTableNames.setCellRenderer(new MyListCellRenderer());
 		listTableNames.setModel(tableListModel);
 		listTableNames.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		listTableNames.addKeyListener(new java.awt.event.KeyAdapter() {
@@ -158,7 +163,6 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		this.setPreferredSize(new Dimension(200, 400));
 		this.setMinimumSize(new Dimension(200, 0));
 		this.setLayout(leftPanelBorderLayout);
-		lblTableCounts.setHorizontalAlignment(SwingConstants.CENTER);
 		lblTableCounts.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblTableCounts.setText("0 Tables");
 		lblViewCounts.setHorizontalAlignment(SwingConstants.CENTER);
@@ -176,21 +180,22 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		cmbConnectionURL.setPreferredSize(new Dimension(125, 20));
 		cmbConnectionURL.setVisible(false);
 		leftPanelBorderLayout.setVgap(3);
-		toolBarTables.setBorder(null);
-		toolBarTables.setFloatable(false);
+		toolBarTablesTop.setBorder(null);
+		toolBarTablesTop.setFloatable(false);
+        toolBarTablesBottom.setBorder(null);
+        toolBarTablesBottom.setFloatable(false);
 		this.add(tabbedPanelMain,  BorderLayout.CENTER);
 		tabbedPanelMain.setPreferredSize(new Dimension(200, 400));
 		tabbedPanelMain.setMinimumSize(new Dimension(200, 0));
 		tabbedPanelMain.add(panelTables, tabbedPaneTitles[0]);
 		panelTables.add(scpTableList, BorderLayout.CENTER);
-		panelTables.add(lblTableCounts, BorderLayout.SOUTH);
-		panelTables.add(toolBarTables, BorderLayout.NORTH);
+		panelTables.add(toolBarTablesBottom, BorderLayout.SOUTH);
+		panelTables.add(toolBarTablesTop, BorderLayout.NORTH);
 		scpTableList.getViewport().add(listTableNames);
 		btnTablesFilter.setIcon(iconTableClearFilterSort);
 		btnTablesFilter.setToolTipText("filter tables");
 		btnTablesFilter.addActionListener(buttonMenuActionListener);
-		toolBarTables.add(btnTablesFilter);
-
+		toolBarTablesTop.add(btnTablesFilter);
         txtSearchTable.setToolTipText("テーブル名クイック検索");
         txtSearchTable.setMaximumSize(new Dimension((int) txtSearchTable.getMaximumSize().getWidth(), 20));
         txtSearchTable.addActionListener(new ActionListener() {
@@ -199,17 +204,28 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
             }
         });
         txtSearchTable.setBackground(SystemColor.control);
-        toolBarTables.add(txtSearchTable, null);
+        toolBarTablesTop.add(txtSearchTable, null);
         btnSearchTable.setIcon(iconSearchTable);
         btnSearchTable.setToolTipText("テーブル名クイック検索");
-        toolBarTables.add(btnSearchTable);
+        toolBarTablesTop.add(btnSearchTable);
         btnSearchTable.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 searchTable();
             }
         });
-		
-		tabbedPanelMain.add(panelViews,  tabbedPaneTitles[1]);
+        chkShowComment.setSelected(isShowComment);
+        chkShowComment.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                isShowComment = chkShowComment.isSelected();
+                listTableNames.repaint();
+            }
+        });
+        toolBarTablesBottom.add(chkShowComment, null);
+        toolBarTablesBottom.add(lblTableCounts, null);
+        lblTableCounts.setMaximumSize(new Dimension(150, 20));
+        lblTableCounts.setHorizontalAlignment(SwingConstants.RIGHT);
+
+        tabbedPanelMain.add(panelViews,  tabbedPaneTitles[1]);	
 		tabbedPanelMain.add(panelNewBeans,  tabbedPaneTitles[2]);
 		panelViews.add(scpViewList,  BorderLayout.CENTER);
 		scpViewList.getViewport().add(lstViewNames, null);
@@ -362,7 +378,11 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
 			if (tableData != null) {
 				if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[0])) {
-					tableNameList.add(tableData.getTableName());
+				    if (tableData.getComment() != null && !"".equals(tableData.getComment())) {
+				        tableNameList.add(tableData.getTableName() + "(" + tableData.getComment() + ")");
+				    } else {
+				        tableNameList.add(tableData.getTableName());
+				    }
 				} else if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[1])) {
 					viewNameList.add(tableData.getTableName());
 				}
@@ -440,6 +460,9 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		String selectedValue = (String) listTableNames.getSelectedValue();
 
 		if (selectedValue != null) {
+		    if (selectedValue.indexOf("(") > 0) {
+		        selectedValue = selectedValue.substring(0, selectedValue.indexOf("("));
+		    }
 			PanelRight existsPanel = parent.getSelectedRightPanel();
 
 			if (existsPanel == null || !selectedValue.equals(existsPanel.getTableName())) {
@@ -785,6 +808,29 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		}
 
 		return nameList;
+	}
+
+	class MyListCellRenderer extends DefaultListCellRenderer {
+
+        /* (非 Javadoc)
+         * @see javax.swing.ListCellRenderer#getListCellRendererComponent(javax.swing.JList, java.lang.Object, int, boolean, boolean)
+         */
+        public Component getListCellRendererComponent(JList list, Object value,
+                int index, boolean isSelected, boolean cellHasFocus) {
+
+            if (!isShowComment) {
+                if (value != null) {
+                    String str = (String) value;
+                    int pos = str.indexOf("(");
+                    if (pos > 0) {
+                        str = str.substring(0, pos);
+                        value = str;
+                    }
+                }
+            }
+
+            return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+        }
 	}
 
 	private synchronized void copy(String content) {

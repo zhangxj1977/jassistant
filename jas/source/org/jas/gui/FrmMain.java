@@ -263,6 +263,7 @@ public class FrmMain extends JFrame implements ParamTransferListener {
 					jiSQLScript.setMaximum(true);
 				} catch (java.beans.PropertyVetoException pve) {}
 			}
+			sqlScriptPanel.resetSplitLayout();
 		}
 		try {
 			jiSQLScript.setSelected(true);
@@ -273,7 +274,6 @@ public class FrmMain extends JFrame implements ParamTransferListener {
 			KeyboardFocusManager.getCurrentKeyboardFocusManager().clearGlobalFocusOwner();
 			jiSQLScript.requestFocus();
 		}
-
 		sqlScriptPanel.txtPanelSQLScript.requestFocus();
 	}
 

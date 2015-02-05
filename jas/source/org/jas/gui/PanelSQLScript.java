@@ -7,22 +7,29 @@ import java.awt.Font;
 import java.awt.FontMetrics;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
+import java.util.ArrayList;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTable;
+import javax.swing.JTextField;
+import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
@@ -45,6 +52,7 @@ import org.jas.common.PJConst;
 import org.jas.db.DBParser;
 import org.jas.util.ImageManager;
 import org.jas.util.MessageManager;
+import org.jas.util.StringUtil;
 
 /**
  *
@@ -65,16 +73,22 @@ public class PanelSQLScript extends JSplitPane {
 	ImageIcon iconShowTables = ImageManager.createImageIcon("showtables.gif");
 	ImageIcon iconEditOneRow = ImageManager.createImageIcon("editonerow.gif");
 	ImageIcon iconResultSave = ImageManager.createImageIcon("savetabledata.gif");
+	ImageIcon iconReplaceParams = ImageManager.createImageIcon("replaceparams.gif");
 	BorderLayout mainBrderLayout = new BorderLayout();
+    JPanel panelSQLLeft = new JPanel();
+    JPanel panelSQLRight = new JPanel();
 	JPanel panelSQLScriptInput = new JPanel();
 	JPanel panelSQLResult = new JPanel();
 	BorderLayout borderLayoutInput = new BorderLayout();
 	BorderLayout borderLayoutResult = new BorderLayout();
-	JPanel panelInput = new JPanel();
+	JSplitPane panelSplitInput = new JSplitPane();
 	JScrollPane scpSQLScriptInput = new JScrollPane();
+	JScrollPane scpSQLParamsInput = new JScrollPane();
+	JToolBar toolBarParamsInput = new JToolBar();
 	JLabel rowHeaderLabel = new JLabel();
 	BorderLayout borderLayoutScriptInput = new BorderLayout();
 	PJSQLTextPane txtPanelSQLScript = new PJSQLTextPane();
+	JTextPane txtPanelSQLParam = new JTextPane();
 	JToolBar toolBarResult = new JToolBar();
 	JScrollPane scpResultTable = new JScrollPane();
 	ScrollChangeListener scrollChangeListener = new ScrollChangeListener();
@@ -96,6 +110,15 @@ public class PanelSQLScript extends JSplitPane {
 	RollOverButton btnSQLBuilder = new RollOverButton();
 	RollOverButton btnShowUsefulInfo = new RollOverButton();
 	RollOverButton btnSaveResult = new RollOverButton();
+	JCheckBox chkShowReplaceParam = new JCheckBox("変数置換");
+    RollOverButton btnReplaceParam = new RollOverButton();
+    
+    JCheckBox chkSepComma = new JCheckBox("カンマ（,）");
+    JCheckBox chkSepSpace = new JCheckBox("スペース");
+    JCheckBox chkSepCustom = new JCheckBox("指定");
+    JTextField txtSepInput = new JTextField(", ");
+
+	double d_location = 1.0d;
 
 	public PanelSQLScript() {
 		try {
@@ -110,9 +133,11 @@ public class PanelSQLScript extends JSplitPane {
 		toolBarSQL.setFloatable(false);
 		this.setOrientation(JSplitPane.VERTICAL_SPLIT);
 		this.setBorder(border1);
+        panelSQLLeft.setLayout(new BorderLayout());
+        panelSQLRight.setLayout(new BorderLayout());
 		panelSQLScriptInput.setLayout(borderLayoutInput);
 		panelSQLResult.setLayout(borderLayoutResult);
-		panelInput.setLayout(borderLayoutScriptInput);
+		panelSplitInput.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
 		btnExecuteSQL.setToolTipText("execute the current sql script  SHIFT-F9");
 		btnExecuteSQL.setIcon(iconSQLExecute);
 		btnExecuteSQL.addActionListener(new java.awt.event.ActionListener() {
@@ -161,10 +186,59 @@ public class PanelSQLScript extends JSplitPane {
 				showTablesPerformed();
 			}
 		});
-		panelSQLScriptInput.add(panelInput,  BorderLayout.CENTER);
-		panelInput.add(scpSQLScriptInput,  BorderLayout.CENTER);
-		panelSQLScriptInput.add(toolBarSQL, BorderLayout.NORTH);
+		
+		chkShowReplaceParam.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                resetSplitLayout();
+            }
+        });
+		btnReplaceParam.setIcon(iconReplaceParams);
+		btnReplaceParam.setToolTipText("バインド変数置換。カンマ区切り。(type)形式対応");
+		btnReplaceParam.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                doReplaceParams();
+            }
+        });
+        panelSQLScriptInput.add(toolBarSQL, BorderLayout.NORTH);
+        panelSQLScriptInput.add(panelSplitInput,  BorderLayout.CENTER);
+        panelSplitInput.setLeftComponent(panelSQLLeft);
+        panelSplitInput.setRightComponent(panelSQLRight);
+
+		panelSQLLeft.add(scpSQLScriptInput,  BorderLayout.CENTER);
+		panelSQLRight.add(scpSQLParamsInput, BorderLayout.CENTER);
+		panelSQLRight.add(toolBarParamsInput, BorderLayout.NORTH);
+		toolBarParamsInput.add(chkSepComma, null);
+		toolBarParamsInput.add(chkSepSpace, null);
+		toolBarParamsInput.add(chkSepCustom, null);
+		toolBarParamsInput.add(txtSepInput, null);
+		toolBarParamsInput.setFloatable(false);
+		chkSepComma.addActionListener(new ActionListener() {           
+            public void actionPerformed(ActionEvent e) {
+                if (chkSepComma.isSelected()) {
+                    chkSepSpace.setSelected(false);
+                    chkSepCustom.setSelected(false);
+                }
+            }
+        });
+		chkSepSpace.addActionListener(new ActionListener() {           
+            public void actionPerformed(ActionEvent e) {
+                if (chkSepSpace.isSelected()) {
+                    chkSepComma.setSelected(false);
+                    chkSepCustom.setSelected(false);
+                }
+            }
+        });
+		chkSepCustom.addActionListener(new ActionListener() {           
+            public void actionPerformed(ActionEvent e) {
+                if (chkSepCustom.isSelected()) {
+                    chkSepComma.setSelected(false);
+                    chkSepSpace.setSelected(false);
+                }
+            }
+        });
+		chkSepCustom.setSelected(true);
 		scpSQLScriptInput.getViewport().add(txtPanelSQLScript, null);
+		scpSQLParamsInput.getViewport().add(txtPanelSQLParam, null);
 		txtPanelSQLScript.setUndoRedoButton(btnUndo, btnRedo);
 		txtPanelSQLScript.addKeyListener(new TextPaneKeyListener());
 		scpSQLScriptInput.getViewport().addChangeListener(scrollChangeListener);
@@ -223,9 +297,34 @@ public class PanelSQLScript extends JSplitPane {
 		toolBarSQL.add(separator3, null);
 		toolBarSQL.add(btnSQLBuilder, null);
 		toolBarSQL.add(btnShowUsefulInfo, null);
+		
+        JToolBar.Separator separator4 = new JToolBar.Separator(new Dimension(2, 28));
+        separator4.setBorder(BorderFactory.createEtchedBorder());
+		toolBarSQL.add(separator4, null);
+		toolBarSQL.add(chkShowReplaceParam, null);
+		toolBarSQL.add(btnReplaceParam, null);
 		this.setBottomComponent(panelSQLResult);
 		this.setTopComponent(panelSQLScriptInput);
 		this.setDividerLocation(250);
+
+		this.addComponentListener(new MyComponentAdapter());
+	}
+
+	class MyComponentAdapter extends ComponentAdapter {
+        public void componentResized(ComponentEvent e) {
+            resetSplitLayout();
+        }
+	}
+
+	public void resetSplitLayout() {
+	    if (chkShowReplaceParam.isSelected()) {
+	        d_location = 0.8d;
+	        btnReplaceParam.setEnabled(true);
+	    } else {
+	        d_location = 1.0d;
+            btnReplaceParam.setEnabled(false);
+	    }
+        panelSplitInput.setDividerLocation(d_location);
 	}
 
 	/**
@@ -292,6 +391,23 @@ public class PanelSQLScript extends JSplitPane {
 		tblScriptResult.getColumnModel().getColumn(0).setPreferredWidth(120);
 
 		tblScriptResult.repaint();
+	}
+
+	void doReplaceParams() {
+	    String strParams = txtPanelSQLParam.getText();
+	    if (strParams == null || strParams.trim().equals("")) {
+	        return;
+	    }
+	    String sep = ",";
+	    if (chkSepComma.isSelected()) {
+	        sep = ",";
+	    } else if (chkSepSpace.isSelected()) {
+	        sep = " ";
+	    } else if (chkSepCustom.isSelected()) {
+	        sep = txtSepInput.getText();
+	    }
+	    String[] lstParams = strParams.split(sep);
+	    txtPanelSQLScript.replaceParams(lstParams);
 	}
 
 	/**

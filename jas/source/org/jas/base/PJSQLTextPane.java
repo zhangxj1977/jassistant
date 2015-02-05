@@ -5,6 +5,8 @@ import java.awt.Font;
 import java.awt.event.ActionEvent;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
+import java.util.ArrayList;
+import java.util.Arrays;
 
 import javax.swing.AbstractAction;
 import javax.swing.Action;
@@ -301,8 +303,57 @@ public class PJSQLTextPane extends JTextPane {
 				replaceSelection(selText);
 			}
 		}
+		requestFocus();
 	}
 	
+	/**
+	 * mybatis形式のパラメータ置換
+	 */
+	public void replaceParams(String[] params) {
+        //System.out.println(Arrays.toString(params));
+	    for (int i = 0; i < params.length; i++) {
+            String tmp = params[i];
+            int startPos = tmp.lastIndexOf('('); 
+            int endPos = tmp.lastIndexOf(')');
+            if (endPos > startPos) {
+                String type = tmp.substring(startPos + 1, endPos);
+                String value = tmp.substring(0, startPos);
+                if ("Integer".equals(type)
+                        || "Long".equals(type)
+                        || "Short".equals(type)
+                        || "BigDecimal".equals(type)
+                        || "BigInteger".equals(type)
+                        || "Float".equals(type)
+                        || "Double".equals(type)) {
+                    tmp = value;
+                } else {
+                    tmp = "'" + value + "'";
+                }
+                params[i] = tmp;
+            }
+        }
+        String selText = getSelectedText();
+        if (selText != null && !selText.trim().equals("")) {
+            int selStart = getSelectionStart();
+            String strFormatted = selText;
+            int cnt = 0;
+            int findPos = strFormatted.indexOf('?');
+            while (findPos > 0) {
+                if (cnt < params.length) {
+                    strFormatted = strFormatted.replaceFirst("\\?", params[cnt]);
+                } else {
+                    break;
+                }
+                cnt++;
+                findPos = strFormatted.indexOf('?');
+            }
+            replaceSelection(strFormatted);
+            hightLight(selStart, selStart + strFormatted.length());
+            select(selStart, selStart + strFormatted.length());
+        }
+        requestFocus();
+	}
+
 	void createStyles() {
 		Style s = addStyle("keyword", null);
 		StyleConstants.setForeground(s, Color.blue);

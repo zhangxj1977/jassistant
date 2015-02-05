@@ -86,10 +86,10 @@ public class PanelRightToolBarPanel extends JPanel {
 				btnRefreshRightPanel_actionPerformed(e);
 			}
 		});
-		lblTableName.setHorizontalAlignment(SwingConstants.LEFT);
+		lblTableName.setHorizontalAlignment(SwingConstants.RIGHT);
 		lblTableName.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblTableName.setText("");
-		lblTableName.setPreferredSize(new Dimension(180, 20));
+		lblTableName.setPreferredSize(new Dimension(380, 20));
 		this.add(toolBar, BorderLayout.CENTER);
 		toolBar.add(btnRefreshTableList, null);
 		toolBar.add(btnRefreshRightPanel, null);

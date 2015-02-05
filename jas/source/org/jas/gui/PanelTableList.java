@@ -329,11 +329,12 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 	 */
 	public void refreshTableList(Connection conn) throws SQLException {
 		initCmbConnectionURL();
+		ArrayList tableList = null;
 		if (conn == null) {
 			tableListModel.setDataSet(null);
 			viewListModel.setDataSet(null);
 		} else {
-			ArrayList tableList = DBParser.getTableLists(conn);
+			tableList = DBParser.getTableLists(conn);
 			setListsValue(tableList);
 		}
 		setCountStatus();
@@ -343,7 +344,14 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		listTableNames.repaint();
 		lstViewNames.repaint();
 
-		ResourceManager.resetTableNameList(getTableList());
+		if (tableList != null) {
+		    String[] tblNames = new String[tableList.size()];
+		    for (int i = 0; i < tableList.size(); i++) {
+		        tblNames[i] = ((TableDefineData) tableList.get(i)).getTableName();
+            }
+
+	        ResourceManager.resetTableNameList(tblNames);
+		}
 	}
 
 	/**
@@ -458,6 +466,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 	 */
 	private void refreshSelectedTableName() {
 		String selectedValue = (String) listTableNames.getSelectedValue();
+		String fullName = selectedValue;
 
 		if (selectedValue != null) {
 		    if (selectedValue.indexOf("(") > 0) {
@@ -484,7 +493,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 				panelTableModify.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
 				existsPanel.panelTableModify = panelTableModify;
 
-				existsPanel.setTableName(PJConst.BEAN_TYPE_TABLE, selectedValue);
+				existsPanel.setTableName(PJConst.BEAN_TYPE_TABLE, fullName);
 				existsPanel.packAll();
 			}
 			parent.showRightPanel(existsPanel);

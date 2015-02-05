@@ -50,7 +50,7 @@ public class BlancoSqlParser {
      * 
      * なお、|| は文字列結合にあたります。
      */
-    private static final String[] twoCharacterSymbol = { "<>", "<=", ">=", "||" };
+    private static final String[] twoCharacterSymbol = { "!=", "<>", "<=", ">=", "||" };
 
     /**
      * パーサのインスタンスを作成します。

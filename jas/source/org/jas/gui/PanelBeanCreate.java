@@ -27,6 +27,7 @@ import javax.swing.BorderFactory;
 import javax.swing.DefaultCellEditor;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -76,6 +77,7 @@ public class PanelBeanCreate extends JPanel implements Refreshable {
 	JLabel lblPackageName = new JLabel();
 	JTextField txtPackageName = new JTextField();
 	JButton btnCreate = new JButton();
+	JCheckBox chkToClipboard = new JCheckBox("Clipboard");
 	static FileDialog fileDialog;
 	ImageIcon iconImportFromFile = ImageManager.createImageIcon("openfile.gif");
 	ImageIcon iconSaveToFile = ImageManager.createImageIcon("savetabledata.gif");
@@ -130,6 +132,8 @@ public class PanelBeanCreate extends JPanel implements Refreshable {
 		btnCreate.setText("Create");
 		btnCreate.setBounds(new Rectangle(322, 47, 63, 25));
 		btnCreate.addActionListener(buttonMenuActionListener);
+		chkToClipboard.setSelected(true);
+		chkToClipboard.setBounds(new Rectangle(322, 21, 100, 25));
 		lblDescription.setText("Description:");
 		lblDescription.setBounds(new Rectangle(9, 52, 69, 21));
 		txtClassDescription.setBounds(new Rectangle(84, 49, 230, 22));
@@ -169,6 +173,7 @@ public class PanelBeanCreate extends JPanel implements Refreshable {
 		panelBottom.add(txtPackageName, null);
 		panelBottom.add(lblDescription, null);
 		panelBottom.add(txtClassDescription, null);
+		panelBottom.add(chkToClipboard, null);
 		panelBottom.add(btnCreate, null);
 		this.add(toolBarTop, BorderLayout.NORTH);
 		this.add(panelCenter, BorderLayout.CENTER);
@@ -178,7 +183,7 @@ public class PanelBeanCreate extends JPanel implements Refreshable {
 		tblColumnDesc.setModel(dataModel);
 		tblColumnDesc.setRowHeight(18);
 		tblColumnDesc.setDefaultRenderer(Object.class, dbTableCellRender);
-		tblColumnDesc.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
+		tblColumnDesc.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		tblColumnDesc.setColumnSelectionAllowed(true);
 		tblColumnDesc.getTableHeader().setReorderingAllowed(false);
 		tblColumnDesc.getSelectionModel().addListSelectionListener(selectionRowListener);
@@ -648,22 +653,24 @@ public class PanelBeanCreate extends JPanel implements Refreshable {
 	 * create action
 	 */
 	void createBean() {
-		if (fileDialog == null) {
-			fileDialog = new FileDialog(Main.getMDIMain());
-		}
-		fileDialog.setMode(FileDialog.SAVE);
-		fileDialog.show();
-		String file = fileDialog.getFile();
-		if (file == null) {
-			return;
-		}
-
-		if (!file.endsWith(".java")) {
-			file = file + ".java";
-		}
-		String directory = fileDialog.getDirectory();
-		File f = new File(directory, file);
-
+	    File f = null;
+	    if (!chkToClipboard.isSelected()) {
+    		if (fileDialog == null) {
+    			fileDialog = new FileDialog(Main.getMDIMain());
+    		}
+    		fileDialog.setMode(FileDialog.SAVE);
+    		fileDialog.show();
+    		String file = fileDialog.getFile();
+    		if (file == null) {
+    			return;
+    		}
+    
+    		if (!file.endsWith(".java")) {
+    			file = file + ".java";
+    		}
+    		String directory = fileDialog.getDirectory();
+    		f = new File(directory, file);
+	    }
 		TemplateManager templateManager = new TemplateManager(txtPackageName.getText(),
 							txtClassDescription.getText(),
 							Main.configPath,
@@ -679,7 +686,13 @@ public class PanelBeanCreate extends JPanel implements Refreshable {
 			return;
 		}
 
-		MessageManager.showInfoMessage(MessageManager.getMessage("MCSTC301I"));
+		String param = "";
+		if (chkToClipboard.isSelected()) {
+		    param = "Clipboard";
+		} else {
+		    param = f.getAbsolutePath();
+		}
+		MessageManager.showInfoMessage(MessageManager.getMessage("MCSTC301I", param));
 	}
 
 	/**

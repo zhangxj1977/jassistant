@@ -20,7 +20,7 @@ MCSTC018Q=delete all the table data by filter, continue?
 MCSTC201E=Can not connect to database. (%1)
 MCSTC202E=Database execute error. (%1)
 
-MCSTC301I=File Successfully created
+MCSTC301I=Java Bean Successfully created.(%1)
 
 FONT_SAMPL=AaBbCcDd
 

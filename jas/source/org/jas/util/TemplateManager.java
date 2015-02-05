@@ -11,6 +11,8 @@ import java.util.Iterator;
 import java.util.Locale;
 import java.util.Vector;
 
+import javax.swing.JTextArea;
+
 import org.jas.common.PJConst;
 import org.jas.model.BeanData;
 import org.jas.model.BeanFieldData;
@@ -119,7 +121,11 @@ public class TemplateManager {
 		beanData.setClassDescription(classDescription);
 		beanData.setAuthor(PropertyManager.getProperty(PJConst.OPTIONS_GENERAL_USER_AUTHOR));
 		beanData.setVersion(PropertyManager.getProperty(PJConst.OPTIONS_GENERAL_USER_VERSION));
-		beanData.setClassName(beanFile.getName().substring(0, beanFile.getName().lastIndexOf(".java")));
+		if (beanFile != null) {
+		    beanData.setClassName(beanFile.getName().substring(0, beanFile.getName().lastIndexOf(".java")));
+		} else {
+		    beanData.setClassName("");
+		}
 
 		beanData.setCommentNullToName(PJConst.OPTIONS_TRUE.equals(PropertyManager.getProperty(PJConst.OPTIONS_COLUMN_COMMENT_DEFAULTNAMEIFNULL)));
 		beanData.setNeedDefaultConstructor(PJConst.OPTIONS_TRUE.equals(PropertyManager.getProperty(PJConst.OPTIONS_COLUMN_BEANINFO_DEFAULTCONSTRUCTOR)));
@@ -221,7 +227,13 @@ public class TemplateManager {
 	 */
 	public void createJavaBean() throws IllegalArgumentException, IOException {
 		String fileString = processReplace(sb.toString());
-		FileManager.writeFile(fileString, beanFile);
+		if (beanFile == null) {
+	        JTextArea tempArea = new JTextArea(fileString);
+	        tempArea.selectAll();
+	        tempArea.copy();
+		} else {
+		    FileManager.writeFile(fileString, beanFile);
+		}
 	}
 
 

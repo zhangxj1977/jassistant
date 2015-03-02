@@ -357,7 +357,7 @@ public class DialogOpenConnection extends PJDialogBase implements ParamTransferL
 		if (selectedIndex >= 0) {
 			String connectionURL = (String) preConnections.get(selectedIndex);
 			int passwordIndex = connectionURL.indexOf("/");
-			int tnsIndex = connectionURL.indexOf("@");
+			int tnsIndex = connectionURL.lastIndexOf("@");
 
 			if (passwordIndex > 0) {
 				userName = connectionURL.substring(0, passwordIndex);
@@ -422,7 +422,7 @@ public class DialogOpenConnection extends PJDialogBase implements ParamTransferL
             
             String connectionURL = (String) value.toString();
             int passwordIndex = connectionURL.indexOf("/");
-            int tnsIndex = connectionURL.indexOf("@");
+            int tnsIndex = connectionURL.lastIndexOf("@");
             String connectionName = "";
             String userName = "";
             if (passwordIndex > 0) {

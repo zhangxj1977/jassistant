@@ -480,6 +480,10 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 				PanelColumnDesc panelColumnDesc = new PanelColumnDesc();
 				panelColumnDesc.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
 				existsPanel.panelColumnDesc = panelColumnDesc;
+				
+				PanelIndexInfos panelIndexInfos = new PanelIndexInfos();
+				panelIndexInfos.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
+				existsPanel.panelIndexInfos = panelIndexInfos;
 
 				PanelKeyReference panelKeyReference = new PanelKeyReference();
 				panelKeyReference.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);

@@ -730,6 +730,55 @@ public class DBParser {
 		return functions;
 	}
 
+	public static Vector getIndexes(Connection conn, String tableName)
+	            throws SQLException {
+
+        DatabaseMetaData dbMetaData = conn.getMetaData();
+
+        // get other descriptions
+        String userName = dbMetaData.getUserName();
+        String driverName = dbMetaData.getDriverName();
+        ResultSet columnSet;
+
+        String schema = null;
+
+        if (isDB(dbMetaData, "Oracle")
+                || isDB(dbMetaData, "jConnect")) {
+            schema = userName;
+        } else if (isDB(dbMetaData, "IBM ")) {
+            int sep = tableName.indexOf(".");
+            if (sep >= 0) {
+                schema = tableName.substring(0, sep);
+                tableName = tableName.substring(sep + 1);
+            }
+        }
+
+        Vector result = new Vector();
+        ResultSet rsIdx = dbMetaData.getIndexInfo("", schema, tableName, false, false);
+        while (rsIdx.next()) {
+            if (DatabaseMetaData.tableIndexStatistic == rsIdx.getInt("TYPE")) {
+                continue;
+            }
+            Vector row = new Vector();
+            row.add(rsIdx.getString("INDEX_NAME"));
+            if (rsIdx.getBoolean("NON_UNIQUE")) {
+                row.add("N");
+            } else {
+                row.add("Y");
+            }
+            row.add(rsIdx.getString("COLUMN_NAME"));
+            row.add(rsIdx.getString("ORDINAL_POSITION"));
+            if ("A".equals(rsIdx.getString("ASC_OR_DESC"))) {
+                row.add("ASC");
+            } else {
+                row.add("DESC");
+            }
+            result.add(row);
+        }
+        rsIdx.close();
+
+        return result;
+	}
 
 	/**
 	 * get import and export key descriptions

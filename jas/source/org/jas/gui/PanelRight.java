@@ -22,6 +22,7 @@ public class PanelRight extends JPanel {
 	BorderLayout mainBorderLayout = new BorderLayout();
 	JTabbedPane tabPanelMain = new JTabbedPane();
 	PanelColumnDesc panelColumnDesc = null;
+	PanelIndexInfos panelIndexInfos = null;
 	PanelKeyReference panelKeyReference = null;
 	PanelBeanCreate panelBeanCreate = null;
 	PanelTableModify panelTableModify = null;
@@ -85,6 +86,9 @@ public class PanelRight extends JPanel {
 		if (panelColumnDesc != null) {
 			tabPanelMain.add(" Columns ", panelColumnDesc);
 		}
+        if (panelIndexInfos != null) {
+            tabPanelMain.add("Indexes", panelIndexInfos);
+        }
 		if (panelKeyReference != null) {
 			tabPanelMain.add("Constraints", panelKeyReference);
 		}
@@ -136,6 +140,9 @@ public class PanelRight extends JPanel {
 		if (panelColumnDesc != null) {
 			panelColumnDesc.setRefreshable(true);
 		}
+        if (panelIndexInfos != null) {
+            panelIndexInfos.setRefreshable(true);
+        }
 		if (panelKeyReference != null) {
 			panelKeyReference.setRefreshable(true);
 		}
@@ -151,6 +158,9 @@ public class PanelRight extends JPanel {
 		if (panelColumnDesc != null) {
 			panelColumnDesc.clearData();
 		}
+        if (panelIndexInfos != null) {
+            panelIndexInfos.clearData();
+        }
 		if (panelKeyReference != null) {
 			panelKeyReference.clearData();
 		}

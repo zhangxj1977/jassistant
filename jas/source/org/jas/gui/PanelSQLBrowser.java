@@ -234,6 +234,10 @@ public class PanelSQLBrowser extends JPanel {
 				SwingUtilities.updateComponentTreeUI(rightPanel.panelColumnDesc);
 				rightPanel.panelColumnDesc.repaint();
 			}
+            if (rightPanel.panelIndexInfos != null) {
+                SwingUtilities.updateComponentTreeUI(rightPanel.panelIndexInfos);
+                rightPanel.panelIndexInfos.repaint();
+            }
 			if (rightPanel.panelKeyReference != null) {
 				SwingUtilities.updateComponentTreeUI(rightPanel.panelKeyReference);
 				rightPanel.panelKeyReference.repaint();

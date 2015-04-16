@@ -61,6 +61,7 @@ public class PanelSQLBrowser extends JPanel {
 		tabbedPanelMap.put(PJConst.BEAN_TYPE_TABLE, panelTablesColumnDescMap);
 		tabbedPanelMap.put(PJConst.BEAN_TYPE_VIEW, panelViewsColumnDescMap);
 		tabbedPanelMap.put(PJConst.BEAN_TYPE_NEWBEAN, panelNewBeansColumnDescMap);
+        tabbedPanelMap.put(PJConst.BEAN_TYPE_REPORT, panelReportMap);
 	}
 
 	/*************************************************************************************
@@ -70,6 +71,7 @@ public class PanelSQLBrowser extends JPanel {
 	HashMap panelTablesColumnDescMap = new HashMap();
 	HashMap panelViewsColumnDescMap = new HashMap();
 	HashMap panelNewBeansColumnDescMap = new HashMap();
+    HashMap panelReportMap = new HashMap();
 
 
 	/**
@@ -82,11 +84,11 @@ public class PanelSQLBrowser extends JPanel {
 	/**
 	 * get exists right panel, previous table description has been cached.
 	 */
-	public PanelBeanCreate getExistsRightBeanPanel(String beanType, String beanName) {
+	public JPanel getExistsRightBeanPanel(String beanType, String beanName) {
 		HashMap tableMap = (HashMap) tabbedPanelMap.get(beanType);
 
 		if (tableMap != null) {
-			return (PanelBeanCreate) tableMap.get(beanName);
+			return (JPanel) tableMap.get(beanName);
 		}
 
 		return null;
@@ -108,7 +110,7 @@ public class PanelSQLBrowser extends JPanel {
 	/**
 	 * cached new right bean panel.
 	 */
-	public void saveRightBeanPanel(String beanType, String beanName, PanelBeanCreate newPanel) {
+	public void saveRightBeanPanel(String beanType, String beanName, JPanel newPanel) {
 		HashMap tableMap = (HashMap) tabbedPanelMap.get(beanType);
 
 		if (tableMap != null) {

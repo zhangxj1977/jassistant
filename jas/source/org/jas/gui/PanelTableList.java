@@ -3,6 +3,7 @@ package org.jas.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.SystemColor;
 import java.awt.Toolkit;
@@ -76,6 +77,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 	JPanel panelTables = new JPanel();
 	JPanel panelViews = new JPanel();
 	JPanel panelNewBeans = new JPanel();
+    JPanel panelReport = new JPanel();
 	JList listTableNames = new JList();
 	JScrollPane scpTableList = new JScrollPane();
 	JLabel lblTableCounts = new JLabel();
@@ -85,9 +87,17 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 	JScrollPane scpNewBeanList = new JScrollPane();
 	JLabel lblNewBeanCounts = new JLabel();
 	JList lstNewBeanList = new JList();
+    JList lstReportList = new JList();
+    JLabel lblReportCounts = new JLabel();
+    JScrollPane scpReportList = new JScrollPane();
 	BorderLayout panelTablesBorderLayout = new BorderLayout();
 	BorderLayout panelViewsBorderLayout = new BorderLayout();
 	BorderLayout panelNewBeansBorderLayout = new BorderLayout();
+    BorderLayout panelReportBorderLayout = new BorderLayout();
+
+    JToolBar toolBarReportTop = new JToolBar();
+    RollOverButton btnNewReport = new RollOverButton();
+    ImageIcon iconNewReport = ImageManager.createImageIcon("newreport.gif");
 	JPanel panelTop = new JPanel();
 	BorderLayout borderLayout1 = new BorderLayout();
 	JComboBox cmbConnectionURL = new JComboBox();
@@ -121,6 +131,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		panelNewBeans.setLayout(panelNewBeansBorderLayout);
 		panelViews.setLayout(panelViewsBorderLayout);
 		panelTables.setLayout(panelTablesBorderLayout);
+		panelReport.setLayout(panelReportBorderLayout);
 		scpTableList.setPreferredSize(new Dimension(200, 400));
 		scpTableList.setBorder(BorderFactory.createLoweredBevelBorder());
 		listTableNames.addListSelectionListener(new ListSelectionListener() {
@@ -160,6 +171,18 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 				lstNewBeanList_keyPressed(e);
 			}
 		});
+		lstReportList.addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                lstReportList_SelectChanged(e);//TODO
+            }
+        });
+		lstReportList.setModel(reportListModel);
+		lstReportList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		lstReportList.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                lstNewBeanList_keyPressed(e);
+            }
+        });
 		this.setPreferredSize(new Dimension(200, 400));
 		this.setMinimumSize(new Dimension(200, 0));
 		this.setLayout(leftPanelBorderLayout);
@@ -171,8 +194,12 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		lblNewBeanCounts.setHorizontalAlignment(SwingConstants.CENTER);
 		lblNewBeanCounts.setHorizontalTextPosition(SwingConstants.CENTER);
 		lblNewBeanCounts.setText("0 Beans");
+        lblReportCounts.setHorizontalAlignment(SwingConstants.CENTER);
+        lblReportCounts.setHorizontalTextPosition(SwingConstants.CENTER);
+        lblReportCounts.setText("0 Reports");
 		scpViewList.setBorder(BorderFactory.createLoweredBevelBorder());
 		scpNewBeanList.setBorder(BorderFactory.createLoweredBevelBorder());
+		scpReportList.setBorder(BorderFactory.createLoweredBevelBorder());
 		panelTop.setPreferredSize(new Dimension(265, 20));
 		panelTop.setLayout(borderLayout1);
 		cmbConnectionURL.setMaximumSize(new Dimension(125, 20));
@@ -191,6 +218,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		panelTables.add(scpTableList, BorderLayout.CENTER);
 		panelTables.add(toolBarTablesBottom, BorderLayout.SOUTH);
 		panelTables.add(toolBarTablesTop, BorderLayout.NORTH);
+
 		scpTableList.getViewport().add(listTableNames);
 		btnTablesFilter.setIcon(iconTableClearFilterSort);
 		btnTablesFilter.setToolTipText("filter tables");
@@ -227,12 +255,17 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
         tabbedPanelMain.add(panelViews,  tabbedPaneTitles[1]);	
 		tabbedPanelMain.add(panelNewBeans,  tabbedPaneTitles[2]);
+		tabbedPanelMain.add(panelReport,  tabbedPaneTitles[3]);
 		panelViews.add(scpViewList,  BorderLayout.CENTER);
 		scpViewList.getViewport().add(lstViewNames, null);
 		panelViews.add(lblViewCounts,  BorderLayout.SOUTH);
 		panelNewBeans.add(scpNewBeanList, BorderLayout.CENTER);
 		scpNewBeanList.getViewport().add(lstNewBeanList, null);
 		panelNewBeans.add(lblNewBeanCounts,  BorderLayout.SOUTH);
+		
+        panelReport.add(scpReportList, BorderLayout.CENTER);
+		scpReportList.getViewport().add(lstReportList, null);
+        panelReport.add(lblReportCounts,  BorderLayout.SOUTH);
 		//this.add(panelTop, BorderLayout.NORTH);
 		//panelTop.add(cmbConnectionURL, BorderLayout.CENTER);
 		tabbedPanelMain.addChangeListener(new javax.swing.event.ChangeListener() {
@@ -243,6 +276,15 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
 		tableNamesPopupMenu.add(mnuItemCopyTableName);
 		//tableNamesPopupMenu.add(mnuItemDeletaTableData);
+
+        btnNewReport.addActionListener(buttonMenuActionListener);
+        btnNewReport.setMargin(new Insets(1, 1, 1, 1));
+        btnNewReport.setIcon(iconNewReport);
+        btnNewReport.setToolTipText("レポート新規作成");
+        panelReport.add(toolBarReportTop, BorderLayout.NORTH);
+        toolBarReportTop.setBorder(null);
+        toolBarReportTop.setFloatable(false);
+        toolBarReportTop.add(btnNewReport);
 
 		mnuItemCopyTableName.setIcon(iconCopy);
 		mnuItemCopyTableName.addActionListener(buttonMenuActionListener);
@@ -260,8 +302,9 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 	PJTableListModel tableListModel = new PJTableListModel();
 	PJTableListModel viewListModel = new PJTableListModel();
 	PJTableListModel newBeanListModel = new PJTableListModel();
+    PJTableListModel reportListModel = new PJTableListModel();
 
-	String[] tabbedPaneTitles = {"テーブル", "ビュー", "Bean"};
+	String[] tabbedPaneTitles = {"テーブル", "ビュー", "Bean", "レポート"};
 
 
 	/**
@@ -374,6 +417,31 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		setTabbedStatus(1);
 	}
 
+    /**
+     * new report lists
+     */
+    public void createReport() {
+        String reportName = MessageManager.showInputDialog(
+                "レポート名前を入力してください。", "名前入力");
+        if (reportName == null || reportName.trim().equals("")) {
+            return;
+        }
+
+        Collection reportList = reportListModel.getDataSet();
+        if (reportList == null) {
+            ArrayList newReportNameList = new ArrayList();
+            reportListModel.setDataSet(newReportNameList);
+        }
+
+        if (reportListModel.contains(reportName)) {
+            lstReportList.setSelectedValue(reportName, true);
+        } else {
+            reportListModel.add(reportName);
+            lstReportList.setSelectedValue(reportName, true);
+        }
+        setCountStatus();
+    }
+
 	/**
 	 * parse name to lists
 	 */
@@ -448,6 +516,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		lblTableCounts.setText(String.valueOf(tableListModel.getSize()) + " " + tabbedPaneTitles[0]);
 		lblViewCounts.setText(String.valueOf(viewListModel.getSize()) + " " + tabbedPaneTitles[1]);
 		lblNewBeanCounts.setText(String.valueOf(newBeanListModel.getSize()) + " " + tabbedPaneTitles[2]);
+		lblReportCounts.setText(String.valueOf(reportListModel.getSize()) + " " + tabbedPaneTitles[3]);
 	}
 
 	/**
@@ -568,7 +637,8 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		if (selectedValue != null) {
 			PanelRight existsPanel = new PanelRight();
 
-			PanelBeanCreate existsBeanPanel = parent.getExistsRightBeanPanel(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
+			PanelBeanCreate existsBeanPanel = (PanelBeanCreate) 
+			        parent.getExistsRightBeanPanel(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
 			if (existsBeanPanel != null) {
 				existsPanel.panelBeanCreate = existsBeanPanel;
 			} else {
@@ -587,6 +657,36 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 			parent.showRightPanel(parent.rightPanel);
 		}
 	}
+
+    /**
+     * refresh selected report panel
+     */
+    private void refreshSelectedReport() {
+        String selectedValue = (String) lstReportList.getSelectedValue();
+
+        if (selectedValue != null) {
+            PanelRight existsPanel = new PanelRight();
+
+            PanelReport existsBeanPanel = (PanelReport)
+                    parent.getExistsRightBeanPanel(PJConst.BEAN_TYPE_REPORT, selectedValue);
+            if (existsBeanPanel != null) {
+                existsPanel.panelReport = existsBeanPanel;
+            } else {
+                PanelReport panelReport = new PanelReport();
+                panelReport.setParam(PJConst.BEAN_TYPE_REPORT, selectedValue);
+                panelReport.refreshDisplay();
+                existsPanel.panelReport = panelReport;
+                parent.saveRightBeanPanel(PJConst.BEAN_TYPE_REPORT, selectedValue, panelReport);
+            }
+
+            existsPanel.setTableName(PJConst.BEAN_TYPE_REPORT, selectedValue);
+            existsPanel.packAll();
+            existsPanel.disableToolBar();
+            parent.showRightPanel(existsPanel);
+        } else {
+            parent.showRightPanel(parent.rightPanel);
+        }
+    }
 
 	/**
 	 * delete selected new bean panel
@@ -628,6 +728,8 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 			} else if (item == mnuItemCopyTableName) {
 				String selectedValue = (String) listTableNames.getSelectedValue();
 				copy(selectedValue);
+			} else if (item == btnNewReport) {
+			    createReport();
 			}
 		}
 	}
@@ -737,6 +839,12 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 		}
 	}
 
+    void lstReportList_SelectChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+            refreshSelectedReport();
+        }
+    }
+	
 	void listTableNames_keyPressed(KeyEvent e) {
 		String selectedValue = (String) listTableNames.getSelectedValue();
 
@@ -799,7 +907,9 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 			refreshSelectedViewName();
 		} else if (selectedIndex == 2) {
 			refreshSelectedNewBean();
-		}
+		} else if (selectedIndex == 3) {
+		    refreshSelectedReport();
+        }
 	}
 
 	String[] getTableList() {

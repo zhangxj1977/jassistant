@@ -124,6 +124,7 @@ public interface PJConst extends Serializable {
 	public static final String BEAN_TYPE_TABLE = "Table";
 	public static final String BEAN_TYPE_VIEW = "View";
 	public static final String BEAN_TYPE_NEWBEAN = "NewBean";
+    public static final String BEAN_TYPE_REPORT = "Report";
 
 	/**
 	 * テンプレートタグ名定義

@@ -3,6 +3,7 @@ package org.jas.gui;
 import java.awt.BorderLayout;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.util.HashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.JPanel;
@@ -25,13 +26,16 @@ public class PanelRight extends JPanel {
 	PanelIndexInfos panelIndexInfos = null;
 	PanelKeyReference panelKeyReference = null;
 	PanelBeanCreate panelBeanCreate = null;
+    PanelReport panelReport= null;
 	PanelTableModify panelTableModify = null;
-	static int selectedIndex = 0;
+	int selectedIndex = 0;
 	StateChangeListener stateChangeListener = new StateChangeListener();
 	BorderLayout borderLayout1 = new BorderLayout();
 	PanelRightToolBarPanel toolBarPanel = new PanelRightToolBarPanel();
 	Border border1;
+    String tableType = null;
 	String tableName = null;
+	static HashMap<String, Integer> selectedMap = new HashMap<String, Integer>();
 
 	public PanelRight() {
 		try {
@@ -57,6 +61,7 @@ public class PanelRight extends JPanel {
 	 */
 	void setTableName(String tableType, String tableName) {
 		this.tableName = tableName;
+		this.tableType = tableType;
 		toolBarPanel.lblTableName.setText(tableType + ": " + (tableName == null ? "" : tableName));
 	}
 
@@ -98,6 +103,9 @@ public class PanelRight extends JPanel {
 		if (panelTableModify != null) {
 			tabPanelMain.add("  Data  ", panelTableModify);
 		}
+        if (panelReport != null) {
+            tabPanelMain.add("  Report  ", panelReport);
+        }
 		tabPanelMain.addChangeListener(stateChangeListener);
 	}
 
@@ -112,6 +120,7 @@ public class PanelRight extends JPanel {
 	 * set selected the same index panel
 	 */
 	void setSelected() {
+	    selectedIndex = selectedMap.get(tableType) == null ? 0 : selectedMap.get(tableType);
 		if (tabPanelMain.getTabCount() > selectedIndex) {
 			tabPanelMain.setSelectedIndex(selectedIndex);
 			refreshSelected();
@@ -176,6 +185,7 @@ public class PanelRight extends JPanel {
 	class StateChangeListener implements ChangeListener {
 		public void stateChanged(ChangeEvent e) {
 			selectedIndex = tabPanelMain.getSelectedIndex();
+			selectedMap.put(tableType, selectedIndex);
 			refreshSelected();
 		}
 	}

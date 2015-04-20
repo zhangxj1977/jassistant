@@ -673,6 +673,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
                 existsPanel.panelReport = existsBeanPanel;
             } else {
                 PanelReport panelReport = new PanelReport();
+                panelReport.setSize(800, this.getHeight() - 40);
                 panelReport.setParam(PJConst.BEAN_TYPE_REPORT, selectedValue);
                 panelReport.refreshDisplay();
                 existsPanel.panelReport = panelReport;

@@ -1,6 +1,7 @@
 package org.jas.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
@@ -8,6 +9,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -23,9 +26,12 @@ import javax.swing.JTable;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.jas.base.PJSQLTextPane;
@@ -74,6 +80,16 @@ public class PanelReport extends JPanel implements Refreshable {
     JScrollPane scpSQLList = new JScrollPane();
     JTable tblSQLList = new JTable();
 
+    RollOverButton btnAddParam = new RollOverButton();
+    RollOverButton btnDeleteParam = new RollOverButton();
+    RollOverButton btnUpParam = new RollOverButton();
+    RollOverButton btnDownParam = new RollOverButton();
+
+    RollOverButton btnAddSQL = new RollOverButton();
+    RollOverButton btnDeleteSQL = new RollOverButton();
+    RollOverButton btnUpSQL = new RollOverButton();
+    RollOverButton btnDownSQL = new RollOverButton();
+
     JButton btnSave = new JButton();
     JButton btnAllExecute = new JButton();
     JButton btnExport = new JButton();
@@ -107,7 +123,7 @@ public class PanelReport extends JPanel implements Refreshable {
         panelBottomRight.setLayout(null);
         panelBottom.add(panelBottomLeft);
         panelBottom.add(panelBottomRight);
-        
+
         ImageIcon iconSave = ImageManager.createImageIcon("savetabledata.gif");
         btnSave.setText("保存");
         btnSave.setIcon(iconSave);
@@ -144,13 +160,13 @@ public class PanelReport extends JPanel implements Refreshable {
 
         panelResult.setLayout(new BorderLayout());
         panelResult.add(tbpResult);
-        
+
         panelInput.setLayout(new BorderLayout());
         panelInput.add(slpDesign);
         slpDesign.setDividerSize(5);
         slpDesign.setTopComponent(panelSQLDesc);
         slpDesign.setBottomComponent(panelSQLEdit);
-        
+
         panelSQLDesc.setLayout(new BorderLayout());
         panelSQLDesc.add(slpDesc);
         slpDesc.setDividerSize(5);
@@ -166,7 +182,7 @@ public class PanelReport extends JPanel implements Refreshable {
         initPanelSQLEdit();
         initPanelResult();
 
-        this.addComponentListener(new ComponentAdapter() {            
+        this.addComponentListener(new ComponentAdapter() {
             public void componentResized(ComponentEvent e) {
                 reLayout();
             }
@@ -180,11 +196,6 @@ public class PanelReport extends JPanel implements Refreshable {
     ParamTableModel paramTblModel = new ParamTableModel();
 
     private void initPanelParam() {
-        RollOverButton btnAddParam = new RollOverButton();
-        RollOverButton btnDeleteParam = new RollOverButton();
-        RollOverButton btnUpParam = new RollOverButton();
-        RollOverButton btnDownParam = new RollOverButton();
-
         btnAddParam.setIcon(iconAddRow);
         btnAddParam.setToolTipText("パラメータを追加");
         btnDeleteParam.setIcon(iconRemoveRow);
@@ -193,7 +204,7 @@ public class PanelReport extends JPanel implements Refreshable {
         btnUpParam.setToolTipText("パラメータを上に移動");
         btnDownParam.setIcon(iconDownarrow);
         btnDownParam.setToolTipText("パラメータを下に移動");
-        
+
         toolBarParam.setFloatable(false);
         toolBarParam.add(btnAddParam);
         toolBarParam.add(btnDeleteParam);
@@ -227,28 +238,51 @@ public class PanelReport extends JPanel implements Refreshable {
             }
         });
         btnDeleteParam.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {  
+            public void actionPerformed(ActionEvent e) {
                 removeSelectParamRow();
             }
         });
         btnDownParam.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {  
+            public void actionPerformed(ActionEvent e) {
                 moveParamRowDown();
             }
         });
         btnUpParam.addActionListener(new ActionListener() {
-            public void actionPerformed(ActionEvent e) {  
+            public void actionPerformed(ActionEvent e) {
                 moveParamRowUp();
             }
         });
+
+        tblParam.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) {
+                    return;
+                }
+                setBtnParamEnable();
+            }
+        });
+        setBtnParamEnable();
     }
 
-    private void initPanelSQLDesc() {
-        RollOverButton btnAddSQL = new RollOverButton();
-        RollOverButton btnDeleteSQL = new RollOverButton();
-        RollOverButton btnUpSQL = new RollOverButton();
-        RollOverButton btnDownSQL = new RollOverButton();
+    private void setBtnParamEnable() {
+        if (tblParam.getSelectedRowCount() > 0) {
+            btnDeleteParam.setEnabled(true);
+            btnDownParam.setEnabled(true);
+            btnUpParam.setEnabled(true);
+        } else {
+            btnDeleteParam.setEnabled(false);
+            btnDownParam.setEnabled(false);
+            btnUpParam.setEnabled(false);
+        }
+    }
 
+    String[] sqlHeaders = new String[]{"No","ｽｷｯﾌﾟ", "名前", "備考", "SQL本体"};
+    int[] sqlColumnWidth = new int[]{20, 50, 100, 150, 300};
+    Vector vecSqlData = new Vector();
+    SQLTableModel sqlTblModel = new SQLTableModel();
+    int IDX_SQLCOL = 4;
+
+    private void initPanelSQLDesc() {
         btnAddSQL.setIcon(iconAddRow);
         btnAddSQL.setToolTipText("SQL文を追加");
         btnDeleteSQL.setIcon(iconRemoveRow);
@@ -271,6 +305,95 @@ public class PanelReport extends JPanel implements Refreshable {
         panelSQLList.setLayout(new BorderLayout());
         panelSQLList.add(toolBarSQLList, BorderLayout.NORTH);
         panelSQLList.add(scpSQLList, BorderLayout.CENTER);
+
+        tblSQLList.setModel(sqlTblModel);
+        tblSQLList.setRowHeight(18);
+        tblSQLList.setDefaultRenderer(Object.class, defaultCellRender);
+        tblSQLList.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        tblSQLList.setColumnSelectionAllowed(false);
+        tblSQLList.getTableHeader().setReorderingAllowed(false);
+        tblSQLList.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+
+        tblSQLList.getColumn(sqlHeaders[0]).setCellRenderer(new IndexCellRender());
+
+        for (int i = 0; i < sqlColumnWidth.length; i++) {
+            tblSQLList.getColumnModel().getColumn(i).setPreferredWidth(sqlColumnWidth[i]);
+        }
+        tblSQLList.getColumnModel().getColumn(0).setMinWidth(sqlColumnWidth[0]);
+        tblSQLList.getColumnModel().getColumn(0).setMaxWidth(sqlColumnWidth[0]);
+        tblSQLList.getColumnModel().getColumn(1).setMinWidth(sqlColumnWidth[1]);
+        tblSQLList.getColumnModel().getColumn(1).setMaxWidth(sqlColumnWidth[1]);
+
+        btnAddSQL.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                addDefaultSQLRow();
+            }
+        });
+        btnDeleteSQL.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                removeSelectSQLRow();
+            }
+        });
+        btnUpSQL.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                moveSQLRowUp();
+            }
+        });
+        btnDownSQL.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                moveSQLRowDown();
+            }
+        });
+
+        tblSQLList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                if (e.getValueIsAdjusting()) {
+                    return;
+                }
+                setBtnSQLEnable();
+
+                Runnable laterDo = new Runnable() {
+                    public void run() {
+                        setSQLEditContent();
+                    }
+                };
+                SwingUtilities.invokeLater(laterDo);
+            }
+        });
+        setBtnSQLEnable();
+    }
+
+    private void setBtnSQLEnable() {
+        if (tblSQLList.getSelectedRowCount() > 0) {
+            btnDeleteSQL.setEnabled(true);
+            btnUpSQL.setEnabled(true);
+            btnDownSQL.setEnabled(true);
+        } else {
+            btnDeleteSQL.setEnabled(false);
+            btnUpSQL.setEnabled(false);
+            btnDownSQL.setEnabled(false);
+        }
+    }
+
+    int selectedSQLRow = -1;
+
+    private void setSQLEditContent() {
+        int selectedRow = tblSQLList.getSelectedRow();
+        if (selectedRow < 0) {
+            return;
+        }
+        selectedSQLRow = selectedRow;
+        String sql = (String) tblSQLList.getValueAt(selectedRow, IDX_SQLCOL);
+        txtSQLEdit.setText(sql);
+    }
+
+    private void saveSQLEditContent() {
+        if (selectedSQLRow < 0) {
+            return;
+        }
+        String sql = txtSQLEdit.getText();
+        tblSQLList.setValueAt(sql, selectedSQLRow, IDX_SQLCOL);
+        tblSQLList.repaint();
     }
 
     private void initPanelSQLEdit() {
@@ -293,11 +416,27 @@ public class PanelReport extends JPanel implements Refreshable {
         toolBarSQLEdit.addSeparator();
         toolBarSQLEdit.add(btnSQLFormat);
 
+        JLabel lblNotice = new JLabel("パラメータ書き方：#9999#、'#abcd#'");
+        lblNotice.setForeground(Color.blue);
+        JPanel toolBarBoth = new JPanel();
+        toolBarBoth.setLayout(new GridLayout(1, 2));
+        toolBarBoth.add(toolBarSQLEdit);
+        toolBarBoth.add(lblNotice);
+
         scpSQLEdit.getViewport().add(txtSQLEdit);
         panelSQLEdit.setLayout(new BorderLayout());
         panelSQLEdit.setBorder(new TitledBorder("SQL編集"));
-        panelSQLEdit.add(toolBarSQLEdit, BorderLayout.NORTH);
+        panelSQLEdit.add(toolBarBoth, BorderLayout.NORTH);
         panelSQLEdit.add(scpSQLEdit, BorderLayout.CENTER);
+
+        txtSQLEdit.addFocusListener(new FocusListener() {
+            public void focusLost(FocusEvent e) {
+                saveSQLEditContent();
+            }
+
+            public void focusGained(FocusEvent e) {
+            }
+        });
     }
 
     private void initPanelResult() {
@@ -363,12 +502,70 @@ public class PanelReport extends JPanel implements Refreshable {
         }
     }
 
+    /**
+     * add one default param row
+     */
+    private void addDefaultSQLRow() {
+        Vector vecOneRecord = new Vector();
+
+        vecOneRecord.add("");
+        vecOneRecord.add(new Boolean(false));
+        vecOneRecord.add("");
+        vecOneRecord.add("");
+        vecOneRecord.add("");
+        int selectedRow = tblSQLList.getSelectedRow();
+        if (selectedRow >= 0) {
+            sqlTblModel.addRow(tblSQLList.getSelectedRow(), vecOneRecord);
+        } else {
+            sqlTblModel.addRow(vecOneRecord);
+            selectedRow = sqlTblModel.getRowCount() - 1;
+        }
+
+        tblSQLList.changeSelection(selectedRow, 0, false, false);
+    }
+
+    private void removeSelectSQLRow() {
+        if (tblSQLList.getSelectedRow() >= 0) {
+            sqlTblModel.removeRow(tblSQLList.getSelectedRow());
+        }
+        tblSQLList.repaint();
+    }
+
+    /**
+     * move row down
+     */
+    void moveSQLRowDown() {
+        int orgRow = tblSQLList.getSelectedRow();
+
+        if (orgRow >= 0) {
+            sqlTblModel.moveRow(tblSQLList.getSelectedRow(), false);
+            if (orgRow < sqlTblModel.getRowCount() - 1) {
+                tblSQLList.changeSelection(orgRow + 1, 0, false, false);
+            }
+        }
+    }
+
+    /**
+     * move row up
+     */
+    void moveSQLRowUp() {
+        int orgRow = tblSQLList.getSelectedRow();
+
+        if (orgRow >= 0) {
+            sqlTblModel.moveRow(tblSQLList.getSelectedRow(), true);
+
+            if (orgRow > 0) {
+                tblSQLList.changeSelection(orgRow - 1, 0, false, false);
+            }
+        }
+    }
+
     public void setParam(String type, String name) {
         this.currentType = type;
         this.currentReportName = name;
     }
 
-    public void resetData() {        
+    public void resetData() {
     }
 
     public void setRefreshable(boolean b) {
@@ -395,10 +592,10 @@ public class PanelReport extends JPanel implements Refreshable {
 
     public void refreshDisplay() {
         // TODO データロード
-        
+
         reLayout();
     }
-    
+
 
     /**
      * テーブルのモードクラス定義
@@ -496,6 +693,101 @@ public class PanelReport extends JPanel implements Refreshable {
     };
 
     /**
+     * テーブルのモードクラス定義
+     */
+    class SQLTableModel extends AbstractTableModel {
+        // default constructor
+        public SQLTableModel() {
+            super();
+        }
+
+        public int getColumnCount() {
+            return sqlHeaders.length;
+        }
+
+        public int getRowCount() {
+            return vecSqlData.size();
+        }
+
+        public Object getValueAt(int row, int col) {
+            return ((Vector) vecSqlData.get(row)).get(col);
+        }
+
+        public String getColumnName(int column) {
+            return sqlHeaders[column];
+        }
+
+        public Class getColumnClass(int c) {
+            Object value = getValueAt(0, c);
+            if (value != null) {
+                return value.getClass();
+            }
+            return Object.class;
+        }
+
+        public boolean isCellEditable(int row, int col) {
+            return (col != 0 && col != 4);
+        }
+
+        public void setValueAt(Object aValue, int row, int column) {
+            ((Vector) vecSqlData.get(row)).set(column, aValue);
+        }
+
+        public void addRow(Vector rowData) {
+            int rows = vecSqlData.size();
+            fireTableRowsInserted(0, rows);
+            vecSqlData.add(rowData);
+        }
+
+        public void addRows(Vector rowDatas) {
+            vecSqlData.addAll(rowDatas);
+            fireTableRowsInserted(0, getRowCount());
+        }
+
+        public void addRow(int index, Vector rowData) {
+            int rows = vecSqlData.size();
+            fireTableRowsInserted(0, rows);
+            vecSqlData.add(index, rowData);
+        }
+
+        public void removeRow(int row) {
+            int rows = vecSqlData.size();
+            if (rows > 0){
+                fireTableRowsDeleted(0, rows - 1);
+                vecSqlData.remove(row);
+            }
+        }
+
+        public void removeAllRows() {
+            int rows = vecSqlData.size();
+            if (rows > 0){
+                fireTableRowsDeleted(0, rows - 1);
+                vecSqlData.removeAllElements();
+            }
+        }
+
+        public void moveRow(int row, boolean up) {
+            Vector vecRec = (Vector) vecSqlData.get(row);
+
+            fireTableRowsUpdated(0, vecSqlData.size());
+
+            if (up) {
+                if (row > 0) {
+                    Vector toVecRec = (Vector) vecSqlData.get(row - 1);
+                    vecSqlData.set(row - 1, vecRec);
+                    vecSqlData.set(row, toVecRec);
+                }
+            } else {
+                if (row < vecSqlData.size() - 1) {
+                    Vector toVecRec = (Vector) vecSqlData.get(row + 1);
+                    vecSqlData.set(row + 1, vecRec);
+                    vecSqlData.set(row, toVecRec);
+                }
+            }
+        }
+    };
+
+    /**
      * the first count button render
      */
     class IndexCellRender extends javax.swing.table.DefaultTableCellRenderer {
@@ -509,9 +801,9 @@ public class PanelReport extends JPanel implements Refreshable {
 
             JLabel lbl = (JLabel) super.getTableCellRendererComponent(
                     table, value, isSelected, hasFocus, row, column);
-            
+
             lbl.setText(String.valueOf(row + 1));
-            
+
             return lbl;
         }
     }

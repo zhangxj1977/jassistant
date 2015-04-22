@@ -63,138 +63,138 @@ import org.jas.util.StringUtil;
  * @version 1.0
  */
 public class PanelSQLScript extends JSplitPane {
-	ImageIcon iconSQLExecute = ImageManager.createImageIcon("sqlexecute.gif");
-	ImageIcon iconCommit = ImageManager.createImageIcon("commit.gif");
-	ImageIcon iconUndo = ImageManager.createImageIcon("undo.gif");
-	ImageIcon iconRedo = ImageManager.createImageIcon("redo.gif");
-	ImageIcon iconToUpper = ImageManager.createImageIcon("touppercase.gif");
-	ImageIcon iconToLower = ImageManager.createImageIcon("tolowcase.gif");
-	ImageIcon iconSQLBuilder = ImageManager.createImageIcon("sqlbuilder.gif");
-	ImageIcon iconShowTables = ImageManager.createImageIcon("showtables.gif");
-	ImageIcon iconEditOneRow = ImageManager.createImageIcon("editonerow.gif");
-	ImageIcon iconResultSave = ImageManager.createImageIcon("savetabledata.gif");
-	ImageIcon iconReplaceParams = ImageManager.createImageIcon("replaceparams.gif");
-	BorderLayout mainBrderLayout = new BorderLayout();
+    ImageIcon iconSQLExecute = ImageManager.createImageIcon("sqlexecute.gif");
+    ImageIcon iconCommit = ImageManager.createImageIcon("commit.gif");
+    ImageIcon iconUndo = ImageManager.createImageIcon("undo.gif");
+    ImageIcon iconRedo = ImageManager.createImageIcon("redo.gif");
+    ImageIcon iconToUpper = ImageManager.createImageIcon("touppercase.gif");
+    ImageIcon iconToLower = ImageManager.createImageIcon("tolowcase.gif");
+    ImageIcon iconSQLBuilder = ImageManager.createImageIcon("sqlbuilder.gif");
+    ImageIcon iconShowTables = ImageManager.createImageIcon("showtables.gif");
+    ImageIcon iconEditOneRow = ImageManager.createImageIcon("editonerow.gif");
+    ImageIcon iconResultSave = ImageManager.createImageIcon("savetabledata.gif");
+    ImageIcon iconReplaceParams = ImageManager.createImageIcon("replaceparams.gif");
+    BorderLayout mainBrderLayout = new BorderLayout();
     JPanel panelSQLLeft = new JPanel();
     JPanel panelSQLRight = new JPanel();
-	JPanel panelSQLScriptInput = new JPanel();
-	JPanel panelSQLResult = new JPanel();
-	BorderLayout borderLayoutInput = new BorderLayout();
-	BorderLayout borderLayoutResult = new BorderLayout();
-	JSplitPane panelSplitInput = new JSplitPane();
-	JScrollPane scpSQLScriptInput = new JScrollPane();
-	JScrollPane scpSQLParamsInput = new JScrollPane();
-	JToolBar toolBarParamsInput = new JToolBar();
-	JLabel rowHeaderLabel = new JLabel();
-	BorderLayout borderLayoutScriptInput = new BorderLayout();
-	PJSQLTextPane txtPanelSQLScript = new PJSQLTextPane();
-	JTextPane txtPanelSQLParam = new JTextPane();
-	JToolBar toolBarResult = new JToolBar();
-	JScrollPane scpResultTable = new JScrollPane();
-	ScrollChangeListener scrollChangeListener = new ScrollChangeListener();
-	JTable tblScriptResult = new PJDBDataTable();
-	PJTableCellRender dbTableCellRender = new PJTableCellRender();
-	Border border1;
-	String lastSQL = null;
-	TitledBorder titledBorder1;
-	JToolBar toolBarSQL = new JToolBar();
-	JButton btnLeftTopCorner = new JButton();
-	PJDBDataTableRowHeader rowHeader = new PJDBDataTableRowHeader(tblScriptResult);
-	TableSelectionRowListener selectionRowListener = new TableSelectionRowListener();
-	RollOverButton btnExecuteSQL = new RollOverButton();
-	RollOverButton btnUndo = new RollOverButton();
-	RollOverButton btnRedo = new RollOverButton();
-	RollOverButton btnCommit = new RollOverButton();
-	RollOverButton btnToUpper = new RollOverButton();
-	RollOverButton btnToLower = new RollOverButton();
-	RollOverButton btnSQLBuilder = new RollOverButton();
-	RollOverButton btnShowUsefulInfo = new RollOverButton();
-	RollOverButton btnSaveResult = new RollOverButton();
-	JCheckBox chkShowReplaceParam = new JCheckBox("変数置換");
+    JPanel panelSQLScriptInput = new JPanel();
+    JPanel panelSQLResult = new JPanel();
+    BorderLayout borderLayoutInput = new BorderLayout();
+    BorderLayout borderLayoutResult = new BorderLayout();
+    JSplitPane panelSplitInput = new JSplitPane();
+    JScrollPane scpSQLScriptInput = new JScrollPane();
+    JScrollPane scpSQLParamsInput = new JScrollPane();
+    JToolBar toolBarParamsInput = new JToolBar();
+    JLabel rowHeaderLabel = new JLabel();
+    BorderLayout borderLayoutScriptInput = new BorderLayout();
+    PJSQLTextPane txtPanelSQLScript = new PJSQLTextPane();
+    JTextPane txtPanelSQLParam = new JTextPane();
+    JToolBar toolBarResult = new JToolBar();
+    JScrollPane scpResultTable = new JScrollPane();
+    ScrollChangeListener scrollChangeListener = new ScrollChangeListener();
+    JTable tblScriptResult = new PJDBDataTable();
+    PJTableCellRender dbTableCellRender = new PJTableCellRender();
+    Border border1;
+    String lastSQL = null;
+    TitledBorder titledBorder1;
+    JToolBar toolBarSQL = new JToolBar();
+    JButton btnLeftTopCorner = new JButton();
+    PJDBDataTableRowHeader rowHeader = new PJDBDataTableRowHeader(tblScriptResult);
+    TableSelectionRowListener selectionRowListener = new TableSelectionRowListener();
+    RollOverButton btnExecuteSQL = new RollOverButton();
+    RollOverButton btnUndo = new RollOverButton();
+    RollOverButton btnRedo = new RollOverButton();
+    RollOverButton btnCommit = new RollOverButton();
+    RollOverButton btnToUpper = new RollOverButton();
+    RollOverButton btnToLower = new RollOverButton();
+    RollOverButton btnSQLBuilder = new RollOverButton();
+    RollOverButton btnShowUsefulInfo = new RollOverButton();
+    RollOverButton btnSaveResult = new RollOverButton();
+    JCheckBox chkShowReplaceParam = new JCheckBox("変数置換");
     RollOverButton btnReplaceParam = new RollOverButton();
-    
+
     JCheckBox chkSepComma = new JCheckBox("カンマ（,）");
     JCheckBox chkSepSpace = new JCheckBox("スペース");
     JCheckBox chkSepCustom = new JCheckBox("指定");
     JTextField txtSepInput = new JTextField(", ");
 
-	double d_location = 1.0d;
+    double d_location = 1.0d;
 
-	public PanelSQLScript() {
-		try {
-			jbInit();
-		} catch(Exception ex) {
-			ex.printStackTrace();
-		}
-	}
+    public PanelSQLScript() {
+        try {
+            jbInit();
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
-	void jbInit() throws Exception {
-		border1 = BorderFactory.createBevelBorder(BevelBorder.RAISED,Color.gray,Color.white,Color.white,new Color(103, 101, 98));
-		toolBarSQL.setFloatable(false);
-		this.setOrientation(JSplitPane.VERTICAL_SPLIT);
-		this.setBorder(border1);
+    void jbInit() throws Exception {
+        border1 = BorderFactory.createBevelBorder(BevelBorder.RAISED,Color.gray,Color.white,Color.white,new Color(103, 101, 98));
+        toolBarSQL.setFloatable(false);
+        this.setOrientation(JSplitPane.VERTICAL_SPLIT);
+        this.setBorder(border1);
         panelSQLLeft.setLayout(new BorderLayout());
         panelSQLRight.setLayout(new BorderLayout());
-		panelSQLScriptInput.setLayout(borderLayoutInput);
-		panelSQLResult.setLayout(borderLayoutResult);
-		panelSplitInput.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
-		btnExecuteSQL.setToolTipText("execute the current sql script  SHIFT-F9");
-		btnExecuteSQL.setIcon(iconSQLExecute);
-		btnExecuteSQL.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				executeSQLPerformed();
-			}
-		});
-		btnUndo.setIcon(iconUndo);
-		btnUndo.setToolTipText("undo last change  CTRL-Z");
-		btnUndo.setEnabled(false);
-		btnRedo.setEnabled(false);
-		btnRedo.setToolTipText("redo last undo  CTRL-Y");
-		btnRedo.setIcon(iconRedo);
-		btnCommit.setToolTipText("commit  CTRL-F9");
-		btnCommit.setIcon(iconCommit);
-		btnCommit.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				commitPerformed();
-			}
-		});
-		btnToUpper.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				toUpperPerformed();
-			}
-		});
-		btnToUpper.setIcon(iconToUpper);
-		btnToUpper.setToolTipText("To Upper Case ALT-F5");
-		btnToLower.setToolTipText("To Lower Case Shift-F5");
-		btnToLower.setIcon(iconToLower);
-		btnToLower.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				toLowerPerformed();
-			}
-		});
-		btnSQLBuilder.setIcon(iconSQLBuilder);
-		btnSQLBuilder.setToolTipText("SQL Format");
-		btnSQLBuilder.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				sqlBuilderPerformed();
-			}
-		});
-		btnShowUsefulInfo.setIcon(iconShowTables);
-		btnShowUsefulInfo.setToolTipText("Select Tables, Columns, Functions");
-		btnShowUsefulInfo.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				showTablesPerformed();
-			}
-		});
-		
-		chkShowReplaceParam.addActionListener(new java.awt.event.ActionListener() {
+        panelSQLScriptInput.setLayout(borderLayoutInput);
+        panelSQLResult.setLayout(borderLayoutResult);
+        panelSplitInput.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
+        btnExecuteSQL.setToolTipText("execute the current sql script  SHIFT-F9");
+        btnExecuteSQL.setIcon(iconSQLExecute);
+        btnExecuteSQL.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                executeSQLPerformed();
+            }
+        });
+        btnUndo.setIcon(iconUndo);
+        btnUndo.setToolTipText("undo last change  CTRL-Z");
+        btnUndo.setEnabled(false);
+        btnRedo.setEnabled(false);
+        btnRedo.setToolTipText("redo last undo  CTRL-Y");
+        btnRedo.setIcon(iconRedo);
+        btnCommit.setToolTipText("commit  CTRL-F9");
+        btnCommit.setIcon(iconCommit);
+        btnCommit.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                commitPerformed();
+            }
+        });
+        btnToUpper.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                toUpperPerformed();
+            }
+        });
+        btnToUpper.setIcon(iconToUpper);
+        btnToUpper.setToolTipText("To Upper Case ALT-F5");
+        btnToLower.setToolTipText("To Lower Case Shift-F5");
+        btnToLower.setIcon(iconToLower);
+        btnToLower.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                toLowerPerformed();
+            }
+        });
+        btnSQLBuilder.setIcon(iconSQLBuilder);
+        btnSQLBuilder.setToolTipText("SQL Format");
+        btnSQLBuilder.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                sqlBuilderPerformed();
+            }
+        });
+        btnShowUsefulInfo.setIcon(iconShowTables);
+        btnShowUsefulInfo.setToolTipText("Select Tables, Columns, Functions");
+        btnShowUsefulInfo.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                showTablesPerformed();
+            }
+        });
+
+        chkShowReplaceParam.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 resetSplitLayout();
             }
         });
-		btnReplaceParam.setIcon(iconReplaceParams);
-		btnReplaceParam.setToolTipText("バインド変数置換。カンマ区切り。(type)形式対応");
-		btnReplaceParam.addActionListener(new java.awt.event.ActionListener() {
+        btnReplaceParam.setIcon(iconReplaceParams);
+        btnReplaceParam.setToolTipText("バインド変数置換。カンマ区切り。(type)形式対応");
+        btnReplaceParam.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 doReplaceParams();
             }
@@ -204,15 +204,15 @@ public class PanelSQLScript extends JSplitPane {
         panelSplitInput.setLeftComponent(panelSQLLeft);
         panelSplitInput.setRightComponent(panelSQLRight);
 
-		panelSQLLeft.add(scpSQLScriptInput,  BorderLayout.CENTER);
-		panelSQLRight.add(scpSQLParamsInput, BorderLayout.CENTER);
-		panelSQLRight.add(toolBarParamsInput, BorderLayout.NORTH);
-		toolBarParamsInput.add(chkSepComma, null);
-		toolBarParamsInput.add(chkSepSpace, null);
-		toolBarParamsInput.add(chkSepCustom, null);
-		toolBarParamsInput.add(txtSepInput, null);
-		toolBarParamsInput.setFloatable(false);
-		chkSepComma.addActionListener(new ActionListener() {           
+        panelSQLLeft.add(scpSQLScriptInput,  BorderLayout.CENTER);
+        panelSQLRight.add(scpSQLParamsInput, BorderLayout.CENTER);
+        panelSQLRight.add(toolBarParamsInput, BorderLayout.NORTH);
+        toolBarParamsInput.add(chkSepComma, null);
+        toolBarParamsInput.add(chkSepSpace, null);
+        toolBarParamsInput.add(chkSepCustom, null);
+        toolBarParamsInput.add(txtSepInput, null);
+        toolBarParamsInput.setFloatable(false);
+        chkSepComma.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (chkSepComma.isSelected()) {
                     chkSepSpace.setSelected(false);
@@ -220,7 +220,7 @@ public class PanelSQLScript extends JSplitPane {
                 }
             }
         });
-		chkSepSpace.addActionListener(new ActionListener() {           
+        chkSepSpace.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (chkSepSpace.isSelected()) {
                     chkSepComma.setSelected(false);
@@ -228,7 +228,7 @@ public class PanelSQLScript extends JSplitPane {
                 }
             }
         });
-		chkSepCustom.addActionListener(new ActionListener() {           
+        chkSepCustom.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 if (chkSepCustom.isSelected()) {
                     chkSepComma.setSelected(false);
@@ -236,384 +236,385 @@ public class PanelSQLScript extends JSplitPane {
                 }
             }
         });
-		chkSepCustom.setSelected(true);
-		scpSQLScriptInput.getViewport().add(txtPanelSQLScript, null);
-		scpSQLParamsInput.getViewport().add(txtPanelSQLParam, null);
-		txtPanelSQLScript.setUndoRedoButton(btnUndo, btnRedo);
-		txtPanelSQLScript.addKeyListener(new TextPaneKeyListener());
-		scpSQLScriptInput.getViewport().addChangeListener(scrollChangeListener);
-		rowHeaderLabel.setPreferredSize(new Dimension(15, 200));
-		rowHeaderLabel.addMouseListener(new MouseAdapter() {
-			public void mouseClicked(MouseEvent e) {
-				rowHeader_Clicked(e);
-			}
-		});
-		scpSQLScriptInput.setRowHeaderView(rowHeaderLabel);
-		btnSaveResult.setIcon(iconResultSave);
-		toolBarResult.setFloatable(false);
-		toolBarResult.add(btnSaveResult);
-		btnSaveResult.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				TableModel model = tblScriptResult.getModel();
-				if (model instanceof DBTableModel) {
-					DBTableModel dbModel = (DBTableModel) model;
-					DialogSaveResultData dialogSaveResultData = new DialogSaveResultData();
-					dialogSaveResultData.initResources(dbModel, lastSQL);
-					dialogSaveResultData.setVisible(true);
-				}
-			}
-		});
-		panelSQLResult.add(toolBarResult, BorderLayout.NORTH);
-		panelSQLResult.add(scpResultTable, BorderLayout.CENTER);
-		scpResultTable.getViewport().add(tblScriptResult, null);
-		tblScriptResult.setDefaultRenderer(Object.class, dbTableCellRender);
-		tblScriptResult.getSelectionModel().addListSelectionListener(selectionRowListener);
-		tblScriptResult.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		scpResultTable.setRowHeaderView(rowHeader);
-		rowHeader.getSelectionModel().addListSelectionListener(selectionRowListener);
-		btnLeftTopCorner.setIcon(iconEditOneRow);
-		btnLeftTopCorner.setPreferredSize(new Dimension(20, 20));
-		btnLeftTopCorner.addActionListener(new java.awt.event.ActionListener() {
-			public void actionPerformed(ActionEvent e) {
-				int selectRow = tblScriptResult.getSelectedRow();
-				viewRowData(selectRow);
-			}
-		});
-		scpResultTable.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, btnLeftTopCorner);
-		toolBarSQL.add(btnExecuteSQL, null);
-		toolBarSQL.add(btnCommit, null);
-		JToolBar.Separator separator1 = new JToolBar.Separator(new Dimension(2, 28));
-		separator1.setBorder(BorderFactory.createEtchedBorder());
-		toolBarSQL.add(separator1, null);
-		toolBarSQL.add(btnUndo, null);
-		toolBarSQL.add(btnRedo, null);
-		JToolBar.Separator separator2 = new JToolBar.Separator(new Dimension(2, 28));
-		separator2.setBorder(BorderFactory.createEtchedBorder());
-		toolBarSQL.add(separator2, null);
-		toolBarSQL.add(btnToUpper, null);
-		toolBarSQL.add(btnToLower, null);
-		JToolBar.Separator separator3 = new JToolBar.Separator(new Dimension(2, 28));
-		separator3.setBorder(BorderFactory.createEtchedBorder());
-		toolBarSQL.add(separator3, null);
-		toolBarSQL.add(btnSQLBuilder, null);
-		toolBarSQL.add(btnShowUsefulInfo, null);
-		
+        chkSepCustom.setSelected(true);
+        scpSQLScriptInput.getViewport().add(txtPanelSQLScript, null);
+        scpSQLParamsInput.getViewport().add(txtPanelSQLParam, null);
+        txtPanelSQLScript.setUndoRedoButton(btnUndo, btnRedo);
+        txtPanelSQLScript.addKeyListener(new TextPaneKeyListener());
+        scpSQLScriptInput.getViewport().addChangeListener(scrollChangeListener);
+        rowHeaderLabel.setPreferredSize(new Dimension(15, 200));
+        rowHeaderLabel.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) {
+                rowHeader_Clicked(e);
+            }
+        });
+        scpSQLScriptInput.setRowHeaderView(rowHeaderLabel);
+        btnSaveResult.setIcon(iconResultSave);
+        toolBarResult.setFloatable(false);
+        toolBarResult.add(btnSaveResult);
+        btnSaveResult.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                TableModel model = tblScriptResult.getModel();
+                if (model instanceof DBTableModel) {
+                    DBTableModel dbModel = (DBTableModel) model;
+                    DialogSaveResultData dialogSaveResultData = new DialogSaveResultData();
+                    dialogSaveResultData.initResources(dbModel, lastSQL);
+                    dialogSaveResultData.setVisible(true);
+                }
+            }
+        });
+        panelSQLResult.add(toolBarResult, BorderLayout.NORTH);
+        panelSQLResult.add(scpResultTable, BorderLayout.CENTER);
+        scpResultTable.getViewport().add(tblScriptResult, null);
+        tblScriptResult.setDefaultRenderer(Object.class, dbTableCellRender);
+        tblScriptResult.getSelectionModel().addListSelectionListener(selectionRowListener);
+        tblScriptResult.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tblScriptResult.setColumnSelectionAllowed(true);
+        scpResultTable.setRowHeaderView(rowHeader);
+        rowHeader.getSelectionModel().addListSelectionListener(selectionRowListener);
+        btnLeftTopCorner.setIcon(iconEditOneRow);
+        btnLeftTopCorner.setPreferredSize(new Dimension(20, 20));
+        btnLeftTopCorner.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                int selectRow = tblScriptResult.getSelectedRow();
+                viewRowData(selectRow);
+            }
+        });
+        scpResultTable.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, btnLeftTopCorner);
+        toolBarSQL.add(btnExecuteSQL, null);
+        toolBarSQL.add(btnCommit, null);
+        JToolBar.Separator separator1 = new JToolBar.Separator(new Dimension(2, 28));
+        separator1.setBorder(BorderFactory.createEtchedBorder());
+        toolBarSQL.add(separator1, null);
+        toolBarSQL.add(btnUndo, null);
+        toolBarSQL.add(btnRedo, null);
+        JToolBar.Separator separator2 = new JToolBar.Separator(new Dimension(2, 28));
+        separator2.setBorder(BorderFactory.createEtchedBorder());
+        toolBarSQL.add(separator2, null);
+        toolBarSQL.add(btnToUpper, null);
+        toolBarSQL.add(btnToLower, null);
+        JToolBar.Separator separator3 = new JToolBar.Separator(new Dimension(2, 28));
+        separator3.setBorder(BorderFactory.createEtchedBorder());
+        toolBarSQL.add(separator3, null);
+        toolBarSQL.add(btnSQLBuilder, null);
+        toolBarSQL.add(btnShowUsefulInfo, null);
+
         JToolBar.Separator separator4 = new JToolBar.Separator(new Dimension(2, 28));
         separator4.setBorder(BorderFactory.createEtchedBorder());
-		toolBarSQL.add(separator4, null);
-		toolBarSQL.add(chkShowReplaceParam, null);
-		toolBarSQL.add(btnReplaceParam, null);
-		this.setBottomComponent(panelSQLResult);
-		this.setTopComponent(panelSQLScriptInput);
-		this.setDividerLocation(250);
+        toolBarSQL.add(separator4, null);
+        toolBarSQL.add(chkShowReplaceParam, null);
+        toolBarSQL.add(btnReplaceParam, null);
+        this.setBottomComponent(panelSQLResult);
+        this.setTopComponent(panelSQLScriptInput);
+        this.setDividerLocation(250);
 
-		this.addComponentListener(new MyComponentAdapter());
-	}
+        this.addComponentListener(new MyComponentAdapter());
+    }
 
-	class MyComponentAdapter extends ComponentAdapter {
+    class MyComponentAdapter extends ComponentAdapter {
         public void componentResized(ComponentEvent e) {
             resetSplitLayout();
         }
-	}
+    }
 
-	public void resetSplitLayout() {
-	    if (chkShowReplaceParam.isSelected()) {
-	        d_location = 0.8d;
-	        btnReplaceParam.setEnabled(true);
-	    } else {
-	        d_location = 1.0d;
+    public void resetSplitLayout() {
+        if (chkShowReplaceParam.isSelected()) {
+            d_location = 0.8d;
+            btnReplaceParam.setEnabled(true);
+        } else {
+            d_location = 1.0d;
             btnReplaceParam.setEnabled(false);
-	    }
+        }
         panelSplitInput.setDividerLocation(d_location);
-	}
+    }
 
-	/**
-	 * init current session table and view names
-	 */
-	void resetPanel() {
-		txtPanelSQLScript.setText("");
-		setEmptyTableModel();
-		if (Main.getMDIMain().getConnection() != null) {
-			txtPanelSQLScript.setEnabled(true);
-			btnCommit.setEnabled(true);
-			btnExecuteSQL.setEnabled(true);
-		} else {
-			txtPanelSQLScript.setEnabled(false);
-			btnCommit.setEnabled(false);
-			btnExecuteSQL.setEnabled(false);
-		}
+    /**
+     * init current session table and view names
+     */
+    void resetPanel() {
+        txtPanelSQLScript.setText("");
+        setEmptyTableModel();
+        if (Main.getMDIMain().getConnection() != null) {
+            txtPanelSQLScript.setEnabled(true);
+            btnCommit.setEnabled(true);
+            btnExecuteSQL.setEnabled(true);
+        } else {
+            txtPanelSQLScript.setEnabled(false);
+            btnCommit.setEnabled(false);
+            btnExecuteSQL.setEnabled(false);
+        }
 
-		txtPanelSQLScript.resetUndoManager();
-	}
+        txtPanelSQLScript.resetUndoManager();
+    }
 
-	/**
-	 * reset the default font style
-	 */
-	void resetDefaultFontStyle() {
-		txtPanelSQLScript.resetDefaultFontStyle();
-	}
+    /**
+     * reset the default font style
+     */
+    void resetDefaultFontStyle() {
+        txtPanelSQLScript.resetDefaultFontStyle();
+    }
 
-	/**
-	 * set empty table data
-	 */
-	void setEmptyTableModel() {
-		Vector tempData = new Vector();
-		Vector columnNameVector = new Vector();
-		Vector commentVector = new Vector();
-		Vector typeVector = new Vector();
-		Vector sizeVector = new Vector();
-		Vector keyVector = new Vector();
-		Vector oneDataVector = new Vector();
+    /**
+     * set empty table data
+     */
+    void setEmptyTableModel() {
+        Vector tempData = new Vector();
+        Vector columnNameVector = new Vector();
+        Vector commentVector = new Vector();
+        Vector typeVector = new Vector();
+        Vector sizeVector = new Vector();
+        Vector keyVector = new Vector();
+        Vector oneDataVector = new Vector();
 
-		columnNameVector.add("       ");
-		typeVector.add(String.class);
-		sizeVector.add(new Integer(20));
-		keyVector.add(new Boolean(false));
+        columnNameVector.add("       ");
+        typeVector.add(String.class);
+        sizeVector.add(new Integer(20));
+        keyVector.add(new Boolean(false));
         commentVector.add("");
-		oneDataVector.add("     ");
+        oneDataVector.add("     ");
 
-		tempData.add(columnNameVector);
-		tempData.add(typeVector);
-		tempData.add(sizeVector);
-		tempData.add(keyVector);
+        tempData.add(columnNameVector);
+        tempData.add(typeVector);
+        tempData.add(sizeVector);
+        tempData.add(keyVector);
         tempData.add(commentVector);
-		tempData.add(oneDataVector);
+        tempData.add(oneDataVector);
 
-		PJTableRowHeaderModel rowHeaderModel = new PJTableRowHeaderModel(rowHeader, tempData);
-		rowHeader.setModel(rowHeaderModel);
+        PJTableRowHeaderModel rowHeaderModel = new PJTableRowHeaderModel(rowHeader, tempData);
+        rowHeader.setModel(rowHeaderModel);
 
-		rowHeaderModel.resetTable();
-		rowHeader.getColumnModel().getColumn(0).setCellRenderer(new PJDBDataTableRowHeaderRender());
+        rowHeaderModel.resetTable();
+        rowHeader.getColumnModel().getColumn(0).setCellRenderer(new PJDBDataTableRowHeaderRender());
 
-		DBTableModel dataModel = new DBTableModel(tblScriptResult, null, tempData, PJConst.TABLE_TYPE_READONLY);
-		tblScriptResult.setModel(dataModel);
+        DBTableModel dataModel = new DBTableModel(tblScriptResult, null, tempData, PJConst.TABLE_TYPE_READONLY);
+        tblScriptResult.setModel(dataModel);
 
-		tblScriptResult.getColumnModel().getColumn(0).setPreferredWidth(120);
+        tblScriptResult.getColumnModel().getColumn(0).setPreferredWidth(120);
 
-		tblScriptResult.repaint();
-	}
+        tblScriptResult.repaint();
+    }
 
-	void doReplaceParams() {
-	    String strParams = txtPanelSQLParam.getText();
-	    if (strParams == null || strParams.trim().equals("")) {
-	        return;
-	    }
-	    String sep = ",";
-	    if (chkSepComma.isSelected()) {
-	        sep = ",";
-	    } else if (chkSepSpace.isSelected()) {
-	        sep = " ";
-	    } else if (chkSepCustom.isSelected()) {
-	        sep = txtSepInput.getText();
-	    }
-	    String[] lstParams = strParams.split(sep);
-	    txtPanelSQLScript.replaceParams(lstParams);
-	}
+    void doReplaceParams() {
+        String strParams = txtPanelSQLParam.getText();
+        if (strParams == null || strParams.trim().equals("")) {
+            return;
+        }
+        String sep = ",";
+        if (chkSepComma.isSelected()) {
+            sep = ",";
+        } else if (chkSepSpace.isSelected()) {
+            sep = " ";
+        } else if (chkSepCustom.isSelected()) {
+            sep = txtSepInput.getText();
+        }
+        String[] lstParams = strParams.split(sep);
+        txtPanelSQLScript.replaceParams(lstParams);
+    }
 
-	/**
-	 * execute sql action perform
-	 */
-	void executeSQLPerformed() {
-		String sql;
-		String selectSql = txtPanelSQLScript.getSelectedText();
-		if (selectSql != null && !selectSql.trim().equals("")) {
-			sql = selectSql;
-		} else {
-			sql = txtPanelSQLScript.getText();
-		}
+    /**
+     * execute sql action perform
+     */
+    void executeSQLPerformed() {
+        String sql;
+        String selectSql = txtPanelSQLScript.getSelectedText();
+        if (selectSql != null && !selectSql.trim().equals("")) {
+            sql = selectSql;
+        } else {
+            sql = txtPanelSQLScript.getText();
+        }
 
-		processResultShow(sql);
-		lastSQL = sql;
-		txtPanelSQLScript.requestFocus();
-	}
+        processResultShow(sql);
+        lastSQL = sql;
+        txtPanelSQLScript.requestFocus();
+    }
 
-	/**
-	 * commit sql action perform
-	 */
-	void commitPerformed() {
-		try {
-			Connection conn = Main.getMDIMain().getConnection();
-			if (conn != null) {
-				conn.commit();
-			}
-		} catch (SQLException se) {
-			MessageManager.showMessage("MCSTC202E", se.getMessage());
-			return;
-		}
+    /**
+     * commit sql action perform
+     */
+    void commitPerformed() {
+        try {
+            Connection conn = Main.getMDIMain().getConnection();
+            if (conn != null) {
+                conn.commit();
+            }
+        } catch (SQLException se) {
+            MessageManager.showMessage("MCSTC202E", se.getMessage());
+            return;
+        }
 
-		txtPanelSQLScript.requestFocus();
-	}
+        txtPanelSQLScript.requestFocus();
+    }
 
-	/**
-	 * to upper case
-	 */
-	void toUpperPerformed() {
-		txtPanelSQLScript.toUpperCase();
-	}
+    /**
+     * to upper case
+     */
+    void toUpperPerformed() {
+        txtPanelSQLScript.toUpperCase();
+    }
 
-	/**
-	 * to lower case
-	 */
-	void toLowerPerformed() {
-		txtPanelSQLScript.toLowerCase();
-	}
+    /**
+     * to lower case
+     */
+    void toLowerPerformed() {
+        txtPanelSQLScript.toLowerCase();
+    }
 
-	/**
-	 * show sql builder window
-	 */
-	void sqlBuilderPerformed() {
-		txtPanelSQLScript.formatSql();
-	}
+    /**
+     * show sql builder window
+     */
+    void sqlBuilderPerformed() {
+        txtPanelSQLScript.formatSql();
+    }
 
-	/**
-	 * open show tables window
-	 */
-	void showTablesPerformed() {
-		DialogSelectTableColumns dialogSelectTableColumns = new DialogSelectTableColumns(this);
-		dialogSelectTableColumns.setVisible(true);
-	}
+    /**
+     * open show tables window
+     */
+    void showTablesPerformed() {
+        DialogSelectTableColumns dialogSelectTableColumns = new DialogSelectTableColumns(this);
+        dialogSelectTableColumns.setVisible(true);
+    }
 
-	/**
-	 * edit one row
-	 */
-	void viewRowData(int selectRow) {
-		if (selectRow < 0) {
-			return;
-		}
+    /**
+     * edit one row
+     */
+    void viewRowData(int selectRow) {
+        if (selectRow < 0) {
+            return;
+        }
 
-		TableModel model = tblScriptResult.getModel();
-		if (model instanceof DBTableModel) {
-			DBTableModel dbModel = (DBTableModel) model;
-			Vector columnName = dbModel.getRealColumnName();
-			Vector commentVector = dbModel.getColumnComment();
-			Vector typeData = dbModel.getColumnJavaType();
-			Vector sizeVector = dbModel.getSizeVector();
-			Vector keyVector = dbModel.getKeyVector();
-			Vector rowData = dbModel.getRowData(selectRow);
+        TableModel model = tblScriptResult.getModel();
+        if (model instanceof DBTableModel) {
+            DBTableModel dbModel = (DBTableModel) model;
+            Vector columnName = dbModel.getRealColumnName();
+            Vector commentVector = dbModel.getColumnComment();
+            Vector typeData = dbModel.getColumnJavaType();
+            Vector sizeVector = dbModel.getSizeVector();
+            Vector keyVector = dbModel.getKeyVector();
+            Vector rowData = dbModel.getRowData(selectRow);
 
-			DialogEditOneRow dialogEditOneRow = new DialogEditOneRow();
-			dialogEditOneRow.initUI(columnName, commentVector, typeData,
-									sizeVector, keyVector,
-									rowData, selectRow, PJConst.TABLE_TYPE_READONLY);
-			dialogEditOneRow.setVisible(true);
-		}
-	}
+            DialogEditOneRow dialogEditOneRow = new DialogEditOneRow();
+            dialogEditOneRow.initUI(columnName, commentVector, typeData,
+                                    sizeVector, keyVector,
+                                    rowData, selectRow, PJConst.TABLE_TYPE_READONLY);
+            dialogEditOneRow.setVisible(true);
+        }
+    }
 
-	/**
-	 * row header click envent
-	 * to select the current line
-	 */
-	void rowHeader_Clicked(MouseEvent e) {
-		Point viewPosition = scpSQLScriptInput.getViewport().getViewPosition();
-		Point clickedPosition = e.getPoint();
-		Font defaultFont = txtPanelSQLScript.getFont();
-		FontMetrics fontMetrics = txtPanelSQLScript.getFontMetrics(defaultFont);
-		int fontHeight = fontMetrics.getHeight();
-		int line = (int) (viewPosition.getY() + clickedPosition.getY()) / fontHeight;
+    /**
+     * row header click envent
+     * to select the current line
+     */
+    void rowHeader_Clicked(MouseEvent e) {
+        Point viewPosition = scpSQLScriptInput.getViewport().getViewPosition();
+        Point clickedPosition = e.getPoint();
+        Font defaultFont = txtPanelSQLScript.getFont();
+        FontMetrics fontMetrics = txtPanelSQLScript.getFontMetrics(defaultFont);
+        int fontHeight = fontMetrics.getHeight();
+        int line = (int) (viewPosition.getY() + clickedPosition.getY()) / fontHeight;
 
-		txtPanelSQLScript.selectLine(line);
-	}
+        txtPanelSQLScript.selectLine(line);
+    }
 
-	/**
-	 * table selection listener
-	 */
-	class TableSelectionRowListener implements javax.swing.event.ListSelectionListener {
+    /**
+     * table selection listener
+     */
+    class TableSelectionRowListener implements javax.swing.event.ListSelectionListener {
 
-		public void valueChanged(javax.swing.event.ListSelectionEvent e) {
-			Object source = e.getSource();
+        public void valueChanged(javax.swing.event.ListSelectionEvent e) {
+            Object source = e.getSource();
 
-			if (!e.getValueIsAdjusting()) {
-				if (source == tblScriptResult.getSelectionModel()) {
-					int selectedRow = tblScriptResult.getSelectedRow();
-					if (rowHeader.getSelectedRow() != selectedRow && selectedRow >= 0) {
-						rowHeader.changeSelection(selectedRow, 0, false, false);
-					}
+            if (!e.getValueIsAdjusting()) {
+                if (source == tblScriptResult.getSelectionModel()) {
+                    int selectedRow = tblScriptResult.getSelectedRow();
+                    if (rowHeader.getSelectedRow() != selectedRow && selectedRow >= 0) {
+                        rowHeader.changeSelection(selectedRow, 0, false, false);
+                    }
 
-					if (selectedRow < 0) {
-						rowHeader.clearSelection();
-					}
-				} else if (source == rowHeader.getSelectionModel()) {
-					int selectedRow = rowHeader.getSelectedRow();
+                    if (selectedRow < 0) {
+                        rowHeader.clearSelection();
+                    }
+                } else if (source == rowHeader.getSelectionModel()) {
+                    int selectedRow = rowHeader.getSelectedRow();
 
-					if (selectedRow >= 0) {
-						if (tblScriptResult.getSelectedRow() != selectedRow) {
-							tblScriptResult.changeSelection(selectedRow, 0, false, false);
-						}
-					} else {
-						tblScriptResult.clearSelection();
-					}
-				}
-			}
-		}
-	}
+                    if (selectedRow >= 0) {
+                        if (tblScriptResult.getSelectedRow() != selectedRow) {
+                            tblScriptResult.changeSelection(selectedRow, 0, false, false);
+                        }
+                    } else {
+                        tblScriptResult.clearSelection();
+                    }
+                }
+            }
+        }
+    }
 
-	/**
-	 * when scrolled reset the row header
-	 *
-	 */
-	class ScrollChangeListener implements ChangeListener {
-		public void stateChanged(ChangeEvent e) {
-			int totalHeight = (int) scpSQLScriptInput.getViewport().getViewSize().getHeight();
+    /**
+     * when scrolled reset the row header
+     *
+     */
+    class ScrollChangeListener implements ChangeListener {
+        public void stateChanged(ChangeEvent e) {
+            int totalHeight = (int) scpSQLScriptInput.getViewport().getViewSize().getHeight();
 
-			rowHeaderLabel.setPreferredSize(new Dimension(15, totalHeight));
-			scpSQLScriptInput.setRowHeaderView(rowHeaderLabel);
-			scpSQLScriptInput.repaint();
-		}
-	}
+            rowHeaderLabel.setPreferredSize(new Dimension(15, totalHeight));
+            scpSQLScriptInput.setRowHeaderView(rowHeaderLabel);
+            scpSQLScriptInput.repaint();
+        }
+    }
 
-	/**
-	 * process query result show
-	 */
-	void processResultShow(String sql) {
-		if (sql == null || sql.trim().equals("")) {
-			return;
-		}
+    /**
+     * process query result show
+     */
+    void processResultShow(String sql) {
+        if (sql == null || sql.trim().equals("")) {
+            return;
+        }
 
-		try {
-			long beginTime = System.currentTimeMillis();
-			Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql);
-			long endTime = System.currentTimeMillis();
-			long executeTime = endTime - beginTime;
+        try {
+            long beginTime = System.currentTimeMillis();
+            Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, false);
+            long endTime = System.currentTimeMillis();
+            long executeTime = endTime - beginTime;
 
-			if (value instanceof Vector) {
-				Vector data = (Vector) value;
-				DBTableModel dataModel = new DBTableModel(tblScriptResult, null, data, PJConst.TABLE_TYPE_READONLY);
-				tblScriptResult.setModel(dataModel);
+            if (value instanceof Vector) {
+                Vector data = (Vector) value;
+                DBTableModel dataModel = new DBTableModel(tblScriptResult, null, data, PJConst.TABLE_TYPE_READONLY);
+                tblScriptResult.setModel(dataModel);
 
-				PJTableRowHeaderModel rowHeaderModel = new PJTableRowHeaderModel(rowHeader, data);
-				rowHeader.setModel(rowHeaderModel);
+                PJTableRowHeaderModel rowHeaderModel = new PJTableRowHeaderModel(rowHeader, data);
+                rowHeader.setModel(rowHeaderModel);
 
-				if (data != null && data.size() > 4) {
-					rowHeaderModel.resetTable();
-					rowHeader.getColumnModel().getColumn(0).setCellRenderer(new PJDBDataTableRowHeaderRender());
-					dataModel.resetTable();
-					Main.getMDIMain().setStatusText((data.size() - 5) + " rows returned: " + executeTime + " ms");
-				}
-			} else if (value instanceof Integer) {
-				int affectRows = ((Integer) value).intValue();
-				Main.getMDIMain().setStatusText(affectRows + " rows updated or inserted: " + executeTime + " ms");
-				setEmptyTableModel();
-			}
-		} catch (SQLException se) {
-			MessageManager.showMessage("MCSTC202E", se.getMessage());
-			return;
-		}
-	}
+                if (data != null && data.size() > 4) {
+                    rowHeaderModel.resetTable();
+                    rowHeader.getColumnModel().getColumn(0).setCellRenderer(new PJDBDataTableRowHeaderRender());
+                    dataModel.resetTable();
+                    Main.getMDIMain().setStatusText((data.size() - 5) + " rows returned: " + executeTime + " ms");
+                }
+            } else if (value instanceof Integer) {
+                int affectRows = ((Integer) value).intValue();
+                Main.getMDIMain().setStatusText(affectRows + " rows updated or inserted: " + executeTime + " ms");
+                setEmptyTableModel();
+            }
+        } catch (SQLException se) {
+            MessageManager.showMessage("MCSTC202E", se.getMessage());
+            return;
+        }
+    }
 
-	/**
-	 * text pane key listener
-	 * it can do highlight, undo redo....
-	 */
-	class TextPaneKeyListener extends KeyAdapter {
-		public void keyPressed(KeyEvent e) {
-			int keyCode = e.getKeyCode();
+    /**
+     * text pane key listener
+     * it can do highlight, undo redo....
+     */
+    class TextPaneKeyListener extends KeyAdapter {
+        public void keyPressed(KeyEvent e) {
+            int keyCode = e.getKeyCode();
 
-			if (keyCode == KeyEvent.VK_F9 && e.isShiftDown()) {
-				executeSQLPerformed();
-			} else if (keyCode == KeyEvent.VK_F9 && e.isControlDown()) {
-				commitPerformed();
-			}
-		}
-	}
+            if (keyCode == KeyEvent.VK_F9 && e.isShiftDown()) {
+                executeSQLPerformed();
+            } else if (keyCode == KeyEvent.VK_F9 && e.isControlDown()) {
+                commitPerformed();
+            }
+        }
+    }
 }
 

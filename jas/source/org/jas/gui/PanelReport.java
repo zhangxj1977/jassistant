@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -30,10 +31,14 @@ import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.border.TitledBorder;
+import javax.swing.event.CellEditorListener;
+import javax.swing.event.ChangeEvent;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
+import org.jas.base.PJDBCellEditor;
+import org.jas.base.PJEditorTextField;
 import org.jas.base.PJSQLTextPane;
 import org.jas.base.PJTableCellRender;
 import org.jas.base.RollOverButton;
@@ -80,6 +85,9 @@ public class PanelReport extends JPanel implements Refreshable {
     JScrollPane scpSQLList = new JScrollPane();
     JTable tblSQLList = new JTable();
 
+    JLabel lblSqlName = new JLabel();
+    JLabel lblSqlDesc = new JLabel();
+
     RollOverButton btnAddParam = new RollOverButton();
     RollOverButton btnDeleteParam = new RollOverButton();
     RollOverButton btnUpParam = new RollOverButton();
@@ -97,6 +105,8 @@ public class PanelReport extends JPanel implements Refreshable {
     ButtonGroup grpExportType = new ButtonGroup();
     JRadioButton rdoExportExcel = new JRadioButton();
     JRadioButton rdoExportCsv = new JRadioButton();
+
+    SQLCellEditorListener sqlCellEditorListener = new SQLCellEditorListener();
 
     String currentReportName = null;
     String currentType = "";
@@ -280,6 +290,10 @@ public class PanelReport extends JPanel implements Refreshable {
     int[] sqlColumnWidth = new int[]{20, 50, 100, 150, 300};
     Vector vecSqlData = new Vector();
     SQLTableModel sqlTblModel = new SQLTableModel();
+    int IDX_SQLINDX = 0;
+    int IDX_SQLSKIP = 1;
+    int IDX_SQLNAME = 2;
+    int IDX_SQLDESC = 3;
     int IDX_SQLCOL = 4;
 
     private void initPanelSQLDesc() {
@@ -319,10 +333,17 @@ public class PanelReport extends JPanel implements Refreshable {
         for (int i = 0; i < sqlColumnWidth.length; i++) {
             tblSQLList.getColumnModel().getColumn(i).setPreferredWidth(sqlColumnWidth[i]);
         }
-        tblSQLList.getColumnModel().getColumn(0).setMinWidth(sqlColumnWidth[0]);
-        tblSQLList.getColumnModel().getColumn(0).setMaxWidth(sqlColumnWidth[0]);
-        tblSQLList.getColumnModel().getColumn(1).setMinWidth(sqlColumnWidth[1]);
-        tblSQLList.getColumnModel().getColumn(1).setMaxWidth(sqlColumnWidth[1]);
+        tblSQLList.getColumnModel().getColumn(IDX_SQLINDX).setMinWidth(sqlColumnWidth[0]);
+        tblSQLList.getColumnModel().getColumn(IDX_SQLINDX).setMaxWidth(sqlColumnWidth[0]);
+        tblSQLList.getColumnModel().getColumn(IDX_SQLSKIP).setMinWidth(sqlColumnWidth[1]);
+        tblSQLList.getColumnModel().getColumn(IDX_SQLSKIP).setMaxWidth(sqlColumnWidth[1]);
+
+        PJEditorTextField editorComp = new PJEditorTextField(String.class);
+        editorComp.setBorder(null);
+        PJDBCellEditor defaultCellEditor = new PJDBCellEditor(editorComp);
+        defaultCellEditor.addCellEditorListener(sqlCellEditorListener);
+        tblSQLList.getColumnModel().getColumn(IDX_SQLNAME).setCellEditor(defaultCellEditor);
+        tblSQLList.getColumnModel().getColumn(IDX_SQLDESC).setCellEditor(defaultCellEditor);
 
         btnAddSQL.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -350,7 +371,7 @@ public class PanelReport extends JPanel implements Refreshable {
                 if (e.getValueIsAdjusting()) {
                     return;
                 }
-                setBtnSQLEnable();
+                setSQLEnable();
 
                 Runnable laterDo = new Runnable() {
                     public void run() {
@@ -360,18 +381,21 @@ public class PanelReport extends JPanel implements Refreshable {
                 SwingUtilities.invokeLater(laterDo);
             }
         });
-        setBtnSQLEnable();
+        setSQLEnable();
     }
 
-    private void setBtnSQLEnable() {
+    private void setSQLEnable() {
         if (tblSQLList.getSelectedRowCount() > 0) {
             btnDeleteSQL.setEnabled(true);
             btnUpSQL.setEnabled(true);
             btnDownSQL.setEnabled(true);
+            txtSQLEdit.setEnabled(true);
+
         } else {
             btnDeleteSQL.setEnabled(false);
             btnUpSQL.setEnabled(false);
             btnDownSQL.setEnabled(false);
+            txtSQLEdit.setEnabled(false);
         }
     }
 
@@ -385,6 +409,19 @@ public class PanelReport extends JPanel implements Refreshable {
         selectedSQLRow = selectedRow;
         String sql = (String) tblSQLList.getValueAt(selectedRow, IDX_SQLCOL);
         txtSQLEdit.setText(sql);
+        txtSQLEdit.resetDefaultFontStyle();
+        setSQLLabel();
+    }
+
+    private void setSQLLabel() {
+        int selectedRow = tblSQLList.getSelectedRow();
+        if (selectedRow < 0) {
+            return;
+        }
+        String sqlName = (String) tblSQLList.getValueAt(selectedRow, IDX_SQLNAME);
+        String sqlDesc = (String) tblSQLList.getValueAt(selectedRow, IDX_SQLDESC);
+        lblSqlName.setText(sqlName);
+        lblSqlDesc.setText(sqlDesc);
     }
 
     private void saveSQLEditContent() {
@@ -403,25 +440,33 @@ public class PanelReport extends JPanel implements Refreshable {
         ImageIcon iconRedo = ImageManager.createImageIcon("redo.gif");
         ImageIcon iconSQLFormat = ImageManager.createImageIcon("sqlbuilder.gif");
 
-        RollOverButton btnVerifySQL = new RollOverButton(iconSQLExecute);
+        RollOverButton btnExecuteSQL = new RollOverButton(iconSQLExecute);
         RollOverButton btnUndo = new RollOverButton(iconUndo);
         RollOverButton btnRedo = new RollOverButton(iconRedo);
         RollOverButton btnSQLFormat = new RollOverButton(iconSQLFormat);
 
+        JLabel lblNotice = new JLabel("　　パラメータ書き方：#9999#、'#abcd#'");
+        lblNotice.setForeground(Color.blue);
+
         toolBarSQLEdit.setFloatable(false);
-        toolBarSQLEdit.add(btnVerifySQL);
+        toolBarSQLEdit.add(btnExecuteSQL);
         toolBarSQLEdit.addSeparator();
         toolBarSQLEdit.add(btnUndo);
         toolBarSQLEdit.add(btnRedo);
         toolBarSQLEdit.addSeparator();
         toolBarSQLEdit.add(btnSQLFormat);
+        toolBarSQLEdit.addSeparator();
+        toolBarSQLEdit.add(lblNotice);
 
-        JLabel lblNotice = new JLabel("パラメータ書き方：#9999#、'#abcd#'");
-        lblNotice.setForeground(Color.blue);
+        JPanel toolBarSQLIdenty = new JPanel();
+        toolBarSQLIdenty.setLayout(new FlowLayout(FlowLayout.LEADING, 10, 8));
         JPanel toolBarBoth = new JPanel();
         toolBarBoth.setLayout(new GridLayout(1, 2));
         toolBarBoth.add(toolBarSQLEdit);
-        toolBarBoth.add(lblNotice);
+        toolBarBoth.add(toolBarSQLIdenty);
+
+        toolBarSQLIdenty.add(lblSqlName);
+        toolBarSQLIdenty.add(lblSqlDesc);
 
         scpSQLEdit.getViewport().add(txtSQLEdit);
         panelSQLEdit.setLayout(new BorderLayout());
@@ -429,6 +474,7 @@ public class PanelReport extends JPanel implements Refreshable {
         panelSQLEdit.add(toolBarBoth, BorderLayout.NORTH);
         panelSQLEdit.add(scpSQLEdit, BorderLayout.CENTER);
 
+        txtSQLEdit.setEnabled(false);
         txtSQLEdit.addFocusListener(new FocusListener() {
             public void focusLost(FocusEvent e) {
                 saveSQLEditContent();
@@ -437,12 +483,40 @@ public class PanelReport extends JPanel implements Refreshable {
             public void focusGained(FocusEvent e) {
             }
         });
+
+        btnExecuteSQL.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                processCurrentSQL();
+            }
+        });
+    }
+
+    void processCurrentSQL() {
+        String selectSql = txtSQLEdit.getText();
+        if (selectSql != null && !selectSql.trim().equals("")) {
+            PanelSQLResult panelResult = new PanelSQLResult();
+            boolean b = panelResult.processResultShow(selectSql);
+
+            if (b) {
+                String title = lblSqlName.getText();
+                int idx = tbpResult.indexOfTab(title);
+                if (idx >= 0) {
+                    tbpResult.setComponentAt(idx, panelResult);
+                } else {
+                    tbpResult.add(title, panelResult);
+                    idx = tbpResult.indexOfTab(title);
+                }
+                tbpResult.setSelectedIndex(idx);
+            }
+        }
     }
 
     private void initPanelResult() {
 
         panelResult.setLayout(new BorderLayout());
         panelResult.setBorder(new TitledBorder("実行結果"));
+
+        panelResult.add(tbpResult, BorderLayout.CENTER);
     }
 
 
@@ -807,4 +881,16 @@ public class PanelReport extends JPanel implements Refreshable {
             return lbl;
         }
     }
+
+    /**
+     * CellEditorListener for deafult edotr
+     */
+    class SQLCellEditorListener implements CellEditorListener {
+        public void editingStopped(ChangeEvent e) {
+            setSQLLabel();
+        }
+
+        public void editingCanceled(ChangeEvent e) {}
+    }
+
 }

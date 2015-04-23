@@ -12,6 +12,13 @@ import java.awt.event.ComponentAdapter;
 import java.awt.event.ComponentEvent;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.FileWriter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
+import java.util.ArrayList;
 import java.util.Vector;
 
 import javax.swing.ButtonGroup;
@@ -43,7 +50,13 @@ import org.jas.base.PJSQLTextPane;
 import org.jas.base.PJTableCellRender;
 import org.jas.base.RollOverButton;
 import org.jas.common.Refreshable;
+import org.jas.model.ReportParam;
+import org.jas.model.ReportSQLDesc;
+import org.jas.model.ReportTemplate;
 import org.jas.util.ImageManager;
+import org.jas.util.MessageManager;
+
+import com.thoughtworks.xstream.XStream;
 
 /**
  *
@@ -57,6 +70,10 @@ public class PanelReport extends JPanel implements Refreshable {
     ImageIcon iconRemoveRow = ImageManager.createImageIcon("deleterow.gif");
     ImageIcon iconUparrow = ImageManager.createImageIcon("uparrow.gif");
     ImageIcon iconDownarrow = ImageManager.createImageIcon("downarrow.gif");
+    ImageIcon iconSQLExecute = ImageManager.createImageIcon("sqlexecute.gif");
+    ImageIcon iconUndo = ImageManager.createImageIcon("undo.gif");
+    ImageIcon iconRedo = ImageManager.createImageIcon("redo.gif");
+    ImageIcon iconSQLFormat = ImageManager.createImageIcon("sqlbuilder.gif");
 
     JPanel panelMain = new JPanel();
     JPanel panelBottom = new JPanel();
@@ -98,6 +115,11 @@ public class PanelReport extends JPanel implements Refreshable {
     RollOverButton btnUpSQL = new RollOverButton();
     RollOverButton btnDownSQL = new RollOverButton();
 
+    RollOverButton btnExecuteSQL = new RollOverButton(iconSQLExecute);
+    RollOverButton btnUndo = new RollOverButton(iconUndo);
+    RollOverButton btnRedo = new RollOverButton(iconRedo);
+    RollOverButton btnSQLFormat = new RollOverButton(iconSQLFormat);
+
     JButton btnSave = new JButton();
     JButton btnAllExecute = new JButton();
     JButton btnExport = new JButton();
@@ -111,6 +133,14 @@ public class PanelReport extends JPanel implements Refreshable {
     String currentReportName = null;
     String currentType = "";
 
+    ReportTemplate reportTemplate = new ReportTemplate();
+    static File configDir = new File(Main.configPath, "report");
+
+    static {
+        if (!configDir.exists()) {
+            configDir.mkdirs();
+        }
+    }
 
     public PanelReport() {
         try {
@@ -138,6 +168,11 @@ public class PanelReport extends JPanel implements Refreshable {
         btnSave.setText("保存");
         btnSave.setIcon(iconSave);
         btnSave.setBounds(15, 10, 80, 25);
+        btnSave.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                saveReportTemplate();
+            }
+        });
         panelBottomLeft.add(btnSave);
 
         ImageIcon iconSQLAllExec = ImageManager.createImageIcon("sqlexecute.gif");
@@ -204,6 +239,9 @@ public class PanelReport extends JPanel implements Refreshable {
     int[] paramColumnWidth = new int[]{20, 140, 140};
     Vector vecParamData = new Vector();
     ParamTableModel paramTblModel = new ParamTableModel();
+    int IDX_PARAMNDX = 0;
+    int IDX_PARAMNAM = 1;
+    int IDX_PARAMVAL = 2;
 
     private void initPanelParam() {
         btnAddParam.setIcon(iconAddRow);
@@ -294,7 +332,7 @@ public class PanelReport extends JPanel implements Refreshable {
     int IDX_SQLSKIP = 1;
     int IDX_SQLNAME = 2;
     int IDX_SQLDESC = 3;
-    int IDX_SQLCOL = 4;
+    int IDX_SQLBODY = 4;
 
     private void initPanelSQLDesc() {
         btnAddSQL.setIcon(iconAddRow);
@@ -390,12 +428,19 @@ public class PanelReport extends JPanel implements Refreshable {
             btnUpSQL.setEnabled(true);
             btnDownSQL.setEnabled(true);
             txtSQLEdit.setEnabled(true);
-
+            btnExecuteSQL.setEnabled(true);
+            btnUndo.setEnabled(true);
+            btnRedo.setEnabled(true);
+            btnSQLFormat.setEnabled(true);
         } else {
             btnDeleteSQL.setEnabled(false);
             btnUpSQL.setEnabled(false);
             btnDownSQL.setEnabled(false);
             txtSQLEdit.setEnabled(false);
+            btnExecuteSQL.setEnabled(false);
+            btnUndo.setEnabled(false);
+            btnRedo.setEnabled(false);
+            btnSQLFormat.setEnabled(false);
         }
     }
 
@@ -407,7 +452,7 @@ public class PanelReport extends JPanel implements Refreshable {
             return;
         }
         selectedSQLRow = selectedRow;
-        String sql = (String) tblSQLList.getValueAt(selectedRow, IDX_SQLCOL);
+        String sql = (String) tblSQLList.getValueAt(selectedRow, IDX_SQLBODY);
         txtSQLEdit.setText(sql);
         txtSQLEdit.resetDefaultFontStyle();
         setSQLLabel();
@@ -429,21 +474,11 @@ public class PanelReport extends JPanel implements Refreshable {
             return;
         }
         String sql = txtSQLEdit.getText();
-        tblSQLList.setValueAt(sql, selectedSQLRow, IDX_SQLCOL);
+        tblSQLList.setValueAt(sql, selectedSQLRow, IDX_SQLBODY);
         tblSQLList.repaint();
     }
 
     private void initPanelSQLEdit() {
-
-        ImageIcon iconSQLExecute = ImageManager.createImageIcon("sqlexecute.gif");
-        ImageIcon iconUndo = ImageManager.createImageIcon("undo.gif");
-        ImageIcon iconRedo = ImageManager.createImageIcon("redo.gif");
-        ImageIcon iconSQLFormat = ImageManager.createImageIcon("sqlbuilder.gif");
-
-        RollOverButton btnExecuteSQL = new RollOverButton(iconSQLExecute);
-        RollOverButton btnUndo = new RollOverButton(iconUndo);
-        RollOverButton btnRedo = new RollOverButton(iconRedo);
-        RollOverButton btnSQLFormat = new RollOverButton(iconSQLFormat);
 
         JLabel lblNotice = new JLabel("　　パラメータ書き方：#9999#、'#abcd#'");
         lblNotice.setForeground(Color.blue);
@@ -650,7 +685,6 @@ public class PanelReport extends JPanel implements Refreshable {
     }
 
     public void clearData() {
-        // TODO
     }
 
     public void reLayout() {
@@ -665,11 +699,105 @@ public class PanelReport extends JPanel implements Refreshable {
     }
 
     public void refreshDisplay() {
-        // TODO データロード
-
+        File templateFile = new File(configDir, currentReportName + ".xml");
+        if (templateFile.exists()) {
+            InputStreamReader isr = null;
+            try {
+                isr = new InputStreamReader(new FileInputStream(templateFile), "UTF-8");
+                XStream xs = new XStream();
+                reportTemplate = (ReportTemplate) xs.fromXML(isr);
+            } catch (Exception e) {
+                MessageManager.showMessage("MCSTC203E", e.getMessage());
+                e.printStackTrace();
+            } finally {
+                if (isr != null) {
+                    try {
+                        isr.close();
+                    } catch (Exception e) {}
+                }
+            }
+        }
+        restoreGUIData();
         reLayout();
     }
 
+    private void restoreGUIData() {
+        ArrayList<ReportParam> paramList = reportTemplate.getParamList();
+        if (paramList != null) {
+            paramTblModel.removeAllRows();
+            for (int i = 0; i < paramList.size(); i++) {
+                ReportParam param = paramList.get(i);
+                Vector<Object> vec = new Vector<Object>();
+                vec.add("");
+                vec.add(param.getName());
+                vec.add(param.getValue());
+                paramTblModel.addRow(vec);
+            }
+            tblParam.repaint();
+        }
+
+        ArrayList<ReportSQLDesc> descList = reportTemplate.getSqlList();
+        if (descList != null) {
+            sqlTblModel.removeAllRows();
+            for (int i = 0; i < descList.size(); i++) {
+                ReportSQLDesc desc = descList.get(i);
+                Vector<Object> vec = new Vector<Object>();
+                vec.add("");
+                vec.add(desc.isSkip());
+                vec.add(desc.getName());
+                vec.add(desc.getDesc());
+                vec.add(desc.getText());
+                sqlTblModel.addRow(vec);
+            }
+            tblSQLList.repaint();
+        }
+    }
+
+    private void saveGUIData() {
+        ArrayList<ReportParam> paramList = new ArrayList<ReportParam>();
+        for (int i = 0; i < vecParamData.size(); i++) {
+            ReportParam param = new ReportParam();
+            param.setName((String) ((Vector) vecParamData.get(i)).get(IDX_PARAMNAM));
+            param.setValue((String) ((Vector) vecParamData.get(i)).get(IDX_PARAMVAL));
+            paramList.add(param);
+        }
+        ArrayList<ReportSQLDesc> sqlList = new ArrayList<ReportSQLDesc>();
+        for (int i = 0; i < vecSqlData.size(); i++) {
+            ReportSQLDesc desc = new ReportSQLDesc();
+            desc.setSkip((Boolean) ((Vector) vecSqlData.get(i)).get(IDX_SQLSKIP));
+            desc.setName((String) ((Vector) vecSqlData.get(i)).get(IDX_SQLNAME));
+            desc.setDesc((String) ((Vector) vecSqlData.get(i)).get(IDX_SQLDESC));
+            desc.setText((String) ((Vector) vecSqlData.get(i)).get(IDX_SQLBODY));
+            sqlList.add(desc);
+        }
+
+        reportTemplate.setName(currentReportName);
+        reportTemplate.setParamList(paramList);
+        reportTemplate.setSqlList(sqlList);
+    }
+
+    private void saveReportTemplate() {
+        saveGUIData();
+
+        File templateFile = new File(configDir, currentReportName + ".xml");
+        OutputStreamWriter fos = null;
+        try {
+            fos = new OutputStreamWriter(new FileOutputStream(templateFile),  "UTF-8");
+            XStream xs = new XStream();
+            xs.toXML(reportTemplate, fos);
+
+            MessageManager.showMessage("MCSTC302I", templateFile.getAbsolutePath());
+        } catch (Exception e) {
+            MessageManager.showMessage("MCSTC203E", e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Exception e) {}
+            }
+        }
+    }
 
     /**
      * テーブルのモードクラス定義

@@ -7,14 +7,33 @@ import java.util.ArrayList;
 public class ReportTemplate implements Serializable {
 
     /**
+     * レポート名前
+     */
+    private String name = null;
+
+    /**
      * パラメータリスト
      */
     private ArrayList<ReportParam> paramList = null;
-    
+
     /**
      * SQL文リスト
      */
     private ArrayList<ReportSQLDesc> sqlList = null;
+
+    /**
+     * @return name
+     */
+    public String getName() {
+        return name;
+    }
+
+    /**
+     * @param name セットする name
+     */
+    public void setName(String name) {
+        this.name = name;
+    }
 
     /**
      * @return paramList

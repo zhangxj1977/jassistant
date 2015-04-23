@@ -15,6 +15,8 @@ import java.awt.event.ItemListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.io.File;
+import java.io.FilenameFilter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -63,167 +65,167 @@ import org.jas.util.ResourceManager;
  */
 
 public class PanelTableList extends JPanel implements ParamTransferListener {
-	ImageIcon iconTableClearFilterSort = ImageManager.createImageIcon("filtersortnothing.gif");
-	ImageIcon iconTableFilterSort = ImageManager.createImageIcon("filtersort.gif");
-	ImageIcon iconCopy = ImageManager.createImageIcon("copy.gif");
-	ImageIcon iconDeleteAllTableData = ImageManager.createImageIcon("deletealltabledata.gif");
-	JPopupMenu tableNamesPopupMenu = new JPopupMenu();
-	JMenuItem mnuItemCopyTableName = new JMenuItem("テーブル名コピー");
-	JMenuItem mnuItemDeletaTableData = new JMenuItem("clear table data");
-	ButtonMenuActionListener buttonMenuActionListener = new ButtonMenuActionListener();
-	ShowPopupMouseListener showPopupMouseListener = new ShowPopupMouseListener();
-	BorderLayout leftPanelBorderLayout = new BorderLayout();
-	JTabbedPane tabbedPanelMain = new JTabbedPane();
-	JPanel panelTables = new JPanel();
-	JPanel panelViews = new JPanel();
-	JPanel panelNewBeans = new JPanel();
+    ImageIcon iconTableClearFilterSort = ImageManager.createImageIcon("filtersortnothing.gif");
+    ImageIcon iconTableFilterSort = ImageManager.createImageIcon("filtersort.gif");
+    ImageIcon iconCopy = ImageManager.createImageIcon("copy.gif");
+    ImageIcon iconDeleteAllTableData = ImageManager.createImageIcon("deletealltabledata.gif");
+    JPopupMenu tableNamesPopupMenu = new JPopupMenu();
+    JMenuItem mnuItemCopyTableName = new JMenuItem("テーブル名コピー");
+    JMenuItem mnuItemDeletaTableData = new JMenuItem("clear table data");
+    ButtonMenuActionListener buttonMenuActionListener = new ButtonMenuActionListener();
+    ShowPopupMouseListener showPopupMouseListener = new ShowPopupMouseListener();
+    BorderLayout leftPanelBorderLayout = new BorderLayout();
+    JTabbedPane tabbedPanelMain = new JTabbedPane();
+    JPanel panelTables = new JPanel();
+    JPanel panelViews = new JPanel();
+    JPanel panelNewBeans = new JPanel();
     JPanel panelReport = new JPanel();
-	JList listTableNames = new JList();
-	JScrollPane scpTableList = new JScrollPane();
-	JLabel lblTableCounts = new JLabel();
-	JScrollPane scpViewList = new JScrollPane();
-	JLabel lblViewCounts = new JLabel();
-	JList lstViewNames = new JList();
-	JScrollPane scpNewBeanList = new JScrollPane();
-	JLabel lblNewBeanCounts = new JLabel();
-	JList lstNewBeanList = new JList();
+    JList listTableNames = new JList();
+    JScrollPane scpTableList = new JScrollPane();
+    JLabel lblTableCounts = new JLabel();
+    JScrollPane scpViewList = new JScrollPane();
+    JLabel lblViewCounts = new JLabel();
+    JList lstViewNames = new JList();
+    JScrollPane scpNewBeanList = new JScrollPane();
+    JLabel lblNewBeanCounts = new JLabel();
+    JList lstNewBeanList = new JList();
     JList lstReportList = new JList();
     JLabel lblReportCounts = new JLabel();
     JScrollPane scpReportList = new JScrollPane();
-	BorderLayout panelTablesBorderLayout = new BorderLayout();
-	BorderLayout panelViewsBorderLayout = new BorderLayout();
-	BorderLayout panelNewBeansBorderLayout = new BorderLayout();
+    BorderLayout panelTablesBorderLayout = new BorderLayout();
+    BorderLayout panelViewsBorderLayout = new BorderLayout();
+    BorderLayout panelNewBeansBorderLayout = new BorderLayout();
     BorderLayout panelReportBorderLayout = new BorderLayout();
 
     JToolBar toolBarReportTop = new JToolBar();
     RollOverButton btnNewReport = new RollOverButton();
     ImageIcon iconNewReport = ImageManager.createImageIcon("newreport.gif");
-	JPanel panelTop = new JPanel();
-	BorderLayout borderLayout1 = new BorderLayout();
-	JComboBox cmbConnectionURL = new JComboBox();
-	JToolBar toolBarTablesTop = new JToolBar();
-	JToolBar toolBarTablesBottom = new JToolBar();
-	RollOverButton btnTablesFilter = new RollOverButton();
-    JCheckBox chkShowComment = new JCheckBox("論理名表示");   
+    JPanel panelTop = new JPanel();
+    BorderLayout borderLayout1 = new BorderLayout();
+    JComboBox cmbConnectionURL = new JComboBox();
+    JToolBar toolBarTablesTop = new JToolBar();
+    JToolBar toolBarTablesBottom = new JToolBar();
+    RollOverButton btnTablesFilter = new RollOverButton();
+    JCheckBox chkShowComment = new JCheckBox("論理名表示");
     ImageIcon iconSearchTable = ImageManager.createImageIcon("editonerow.gif");
     JTextField txtSearchTable = new JTextField();
     RollOverButton btnSearchTable = new RollOverButton();
-	PanelSQLBrowser parent;
-	HashMap hideTableItems = new HashMap();
-	PanelRight lastSelectTable = null;
-	PanelRight lastSelectView = null;
-	static boolean isShowComment = false;
+    PanelSQLBrowser parent;
+    HashMap hideTableItems = new HashMap();
+    PanelRight lastSelectTable = null;
+    PanelRight lastSelectView = null;
+    static boolean isShowComment = false;
 
-	public PanelTableList() {
-		try {
-			jbInit();
-			initCmbConnectionURL();
-		} catch(Exception ex) {
-			ex.printStackTrace();
-		}
-	}
+    public PanelTableList() {
+        try {
+            jbInit();
+            initCmbConnectionURL();
+        } catch(Exception ex) {
+            ex.printStackTrace();
+        }
+    }
 
-	public void setParent(PanelSQLBrowser parent) {
-		this.parent = parent;
-	}
+    public void setParent(PanelSQLBrowser parent) {
+        this.parent = parent;
+    }
 
-	void jbInit() throws Exception {
-		panelNewBeans.setLayout(panelNewBeansBorderLayout);
-		panelViews.setLayout(panelViewsBorderLayout);
-		panelTables.setLayout(panelTablesBorderLayout);
-		panelReport.setLayout(panelReportBorderLayout);
-		scpTableList.setPreferredSize(new Dimension(200, 400));
-		scpTableList.setBorder(BorderFactory.createLoweredBevelBorder());
-		listTableNames.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				listTableNames_SelectChanged(e);
-			}
-		});
-		listTableNames.setCellRenderer(new MyListCellRenderer());
-		listTableNames.setModel(tableListModel);
-		listTableNames.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		listTableNames.addKeyListener(new java.awt.event.KeyAdapter() {
-			public void keyPressed(KeyEvent e) {
-				listTableNames_keyPressed(e);
-			}
-		});
-		lstViewNames.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				lstViewNames_SelectChanged(e);
-			}
-		});
-		lstViewNames.setModel(viewListModel);
-		lstViewNames.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		lstViewNames.addKeyListener(new java.awt.event.KeyAdapter() {
-			public void keyPressed(KeyEvent e) {
-				lstViewNames_keyPressed(e);
-			}
-		});
-		lstNewBeanList.addListSelectionListener(new ListSelectionListener() {
-			public void valueChanged(ListSelectionEvent e) {
-				lstNewBeanList_SelectChanged(e);
-			}
-		});
-		lstNewBeanList.setModel(newBeanListModel);
-		lstNewBeanList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		lstNewBeanList.addKeyListener(new java.awt.event.KeyAdapter() {
-			public void keyPressed(KeyEvent e) {
-				lstNewBeanList_keyPressed(e);
-			}
-		});
-		lstReportList.addListSelectionListener(new ListSelectionListener() {
+    void jbInit() throws Exception {
+        panelNewBeans.setLayout(panelNewBeansBorderLayout);
+        panelViews.setLayout(panelViewsBorderLayout);
+        panelTables.setLayout(panelTablesBorderLayout);
+        panelReport.setLayout(panelReportBorderLayout);
+        scpTableList.setPreferredSize(new Dimension(200, 400));
+        scpTableList.setBorder(BorderFactory.createLoweredBevelBorder());
+        listTableNames.addListSelectionListener(new ListSelectionListener() {
             public void valueChanged(ListSelectionEvent e) {
-                lstReportList_SelectChanged(e);//TODO
+                listTableNames_SelectChanged(e);
             }
         });
-		lstReportList.setModel(reportListModel);
-		lstReportList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-		lstReportList.addKeyListener(new java.awt.event.KeyAdapter() {
+        listTableNames.setCellRenderer(new MyListCellRenderer());
+        listTableNames.setModel(tableListModel);
+        listTableNames.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        listTableNames.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                listTableNames_keyPressed(e);
+            }
+        });
+        lstViewNames.addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                lstViewNames_SelectChanged(e);
+            }
+        });
+        lstViewNames.setModel(viewListModel);
+        lstViewNames.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        lstViewNames.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                lstViewNames_keyPressed(e);
+            }
+        });
+        lstNewBeanList.addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                lstNewBeanList_SelectChanged(e);
+            }
+        });
+        lstNewBeanList.setModel(newBeanListModel);
+        lstNewBeanList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        lstNewBeanList.addKeyListener(new java.awt.event.KeyAdapter() {
             public void keyPressed(KeyEvent e) {
                 lstNewBeanList_keyPressed(e);
             }
         });
-		this.setPreferredSize(new Dimension(200, 400));
-		this.setMinimumSize(new Dimension(200, 0));
-		this.setLayout(leftPanelBorderLayout);
-		lblTableCounts.setHorizontalTextPosition(SwingConstants.CENTER);
-		lblTableCounts.setText("0 Tables");
-		lblViewCounts.setHorizontalAlignment(SwingConstants.CENTER);
-		lblViewCounts.setHorizontalTextPosition(SwingConstants.CENTER);
-		lblViewCounts.setText("0 Views");
-		lblNewBeanCounts.setHorizontalAlignment(SwingConstants.CENTER);
-		lblNewBeanCounts.setHorizontalTextPosition(SwingConstants.CENTER);
-		lblNewBeanCounts.setText("0 Beans");
+        lstReportList.addListSelectionListener(new ListSelectionListener() {
+            public void valueChanged(ListSelectionEvent e) {
+                lstReportList_SelectChanged(e);//TODO
+            }
+        });
+        lstReportList.setModel(reportListModel);
+        lstReportList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+        lstReportList.addKeyListener(new java.awt.event.KeyAdapter() {
+            public void keyPressed(KeyEvent e) {
+                lstNewBeanList_keyPressed(e);
+            }
+        });
+        this.setPreferredSize(new Dimension(200, 400));
+        this.setMinimumSize(new Dimension(200, 0));
+        this.setLayout(leftPanelBorderLayout);
+        lblTableCounts.setHorizontalTextPosition(SwingConstants.CENTER);
+        lblTableCounts.setText("0 Tables");
+        lblViewCounts.setHorizontalAlignment(SwingConstants.CENTER);
+        lblViewCounts.setHorizontalTextPosition(SwingConstants.CENTER);
+        lblViewCounts.setText("0 Views");
+        lblNewBeanCounts.setHorizontalAlignment(SwingConstants.CENTER);
+        lblNewBeanCounts.setHorizontalTextPosition(SwingConstants.CENTER);
+        lblNewBeanCounts.setText("0 Beans");
         lblReportCounts.setHorizontalAlignment(SwingConstants.CENTER);
         lblReportCounts.setHorizontalTextPosition(SwingConstants.CENTER);
         lblReportCounts.setText("0 Reports");
-		scpViewList.setBorder(BorderFactory.createLoweredBevelBorder());
-		scpNewBeanList.setBorder(BorderFactory.createLoweredBevelBorder());
-		scpReportList.setBorder(BorderFactory.createLoweredBevelBorder());
-		panelTop.setPreferredSize(new Dimension(265, 20));
-		panelTop.setLayout(borderLayout1);
-		cmbConnectionURL.setMaximumSize(new Dimension(125, 20));
-		cmbConnectionURL.setMinimumSize(new Dimension(125, 20));
-		cmbConnectionURL.setPreferredSize(new Dimension(125, 20));
-		cmbConnectionURL.setVisible(false);
-		leftPanelBorderLayout.setVgap(3);
-		toolBarTablesTop.setBorder(null);
-		toolBarTablesTop.setFloatable(false);
+        scpViewList.setBorder(BorderFactory.createLoweredBevelBorder());
+        scpNewBeanList.setBorder(BorderFactory.createLoweredBevelBorder());
+        scpReportList.setBorder(BorderFactory.createLoweredBevelBorder());
+        panelTop.setPreferredSize(new Dimension(265, 20));
+        panelTop.setLayout(borderLayout1);
+        cmbConnectionURL.setMaximumSize(new Dimension(125, 20));
+        cmbConnectionURL.setMinimumSize(new Dimension(125, 20));
+        cmbConnectionURL.setPreferredSize(new Dimension(125, 20));
+        cmbConnectionURL.setVisible(false);
+        leftPanelBorderLayout.setVgap(3);
+        toolBarTablesTop.setBorder(null);
+        toolBarTablesTop.setFloatable(false);
         toolBarTablesBottom.setBorder(null);
         toolBarTablesBottom.setFloatable(false);
-		this.add(tabbedPanelMain,  BorderLayout.CENTER);
-		tabbedPanelMain.setPreferredSize(new Dimension(200, 400));
-		tabbedPanelMain.setMinimumSize(new Dimension(200, 0));
-		tabbedPanelMain.add(panelTables, tabbedPaneTitles[0]);
-		panelTables.add(scpTableList, BorderLayout.CENTER);
-		panelTables.add(toolBarTablesBottom, BorderLayout.SOUTH);
-		panelTables.add(toolBarTablesTop, BorderLayout.NORTH);
+        this.add(tabbedPanelMain,  BorderLayout.CENTER);
+        tabbedPanelMain.setPreferredSize(new Dimension(200, 400));
+        tabbedPanelMain.setMinimumSize(new Dimension(200, 0));
+        tabbedPanelMain.add(panelTables, tabbedPaneTitles[0]);
+        panelTables.add(scpTableList, BorderLayout.CENTER);
+        panelTables.add(toolBarTablesBottom, BorderLayout.SOUTH);
+        panelTables.add(toolBarTablesTop, BorderLayout.NORTH);
 
-		scpTableList.getViewport().add(listTableNames);
-		btnTablesFilter.setIcon(iconTableClearFilterSort);
-		btnTablesFilter.setToolTipText("filter tables");
-		btnTablesFilter.addActionListener(buttonMenuActionListener);
-		toolBarTablesTop.add(btnTablesFilter);
+        scpTableList.getViewport().add(listTableNames);
+        btnTablesFilter.setIcon(iconTableClearFilterSort);
+        btnTablesFilter.setToolTipText("filter tables");
+        btnTablesFilter.addActionListener(buttonMenuActionListener);
+        toolBarTablesTop.add(btnTablesFilter);
         txtSearchTable.setToolTipText("テーブル名クイック検索");
         txtSearchTable.setMaximumSize(new Dimension((int) txtSearchTable.getMaximumSize().getWidth(), 20));
         txtSearchTable.addActionListener(new ActionListener() {
@@ -253,29 +255,29 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         lblTableCounts.setMaximumSize(new Dimension(150, 20));
         lblTableCounts.setHorizontalAlignment(SwingConstants.RIGHT);
 
-        tabbedPanelMain.add(panelViews,  tabbedPaneTitles[1]);	
-		tabbedPanelMain.add(panelNewBeans,  tabbedPaneTitles[2]);
-		tabbedPanelMain.add(panelReport,  tabbedPaneTitles[3]);
-		panelViews.add(scpViewList,  BorderLayout.CENTER);
-		scpViewList.getViewport().add(lstViewNames, null);
-		panelViews.add(lblViewCounts,  BorderLayout.SOUTH);
-		panelNewBeans.add(scpNewBeanList, BorderLayout.CENTER);
-		scpNewBeanList.getViewport().add(lstNewBeanList, null);
-		panelNewBeans.add(lblNewBeanCounts,  BorderLayout.SOUTH);
-		
-        panelReport.add(scpReportList, BorderLayout.CENTER);
-		scpReportList.getViewport().add(lstReportList, null);
-        panelReport.add(lblReportCounts,  BorderLayout.SOUTH);
-		//this.add(panelTop, BorderLayout.NORTH);
-		//panelTop.add(cmbConnectionURL, BorderLayout.CENTER);
-		tabbedPanelMain.addChangeListener(new javax.swing.event.ChangeListener() {
-			public void stateChanged(ChangeEvent e) {
-				tabbedPanelMain_stateChanged(e);
-			}
-		});
+        tabbedPanelMain.add(panelViews,  tabbedPaneTitles[1]);
+        tabbedPanelMain.add(panelNewBeans,  tabbedPaneTitles[2]);
+        tabbedPanelMain.add(panelReport,  tabbedPaneTitles[3]);
+        panelViews.add(scpViewList,  BorderLayout.CENTER);
+        scpViewList.getViewport().add(lstViewNames, null);
+        panelViews.add(lblViewCounts,  BorderLayout.SOUTH);
+        panelNewBeans.add(scpNewBeanList, BorderLayout.CENTER);
+        scpNewBeanList.getViewport().add(lstNewBeanList, null);
+        panelNewBeans.add(lblNewBeanCounts,  BorderLayout.SOUTH);
 
-		tableNamesPopupMenu.add(mnuItemCopyTableName);
-		//tableNamesPopupMenu.add(mnuItemDeletaTableData);
+        panelReport.add(scpReportList, BorderLayout.CENTER);
+        scpReportList.getViewport().add(lstReportList, null);
+        panelReport.add(lblReportCounts,  BorderLayout.SOUTH);
+        //this.add(panelTop, BorderLayout.NORTH);
+        //panelTop.add(cmbConnectionURL, BorderLayout.CENTER);
+        tabbedPanelMain.addChangeListener(new javax.swing.event.ChangeListener() {
+            public void stateChanged(ChangeEvent e) {
+                tabbedPanelMain_stateChanged(e);
+            }
+        });
+
+        tableNamesPopupMenu.add(mnuItemCopyTableName);
+        //tableNamesPopupMenu.add(mnuItemDeletaTableData);
 
         btnNewReport.addActionListener(buttonMenuActionListener);
         btnNewReport.setMargin(new Insets(1, 1, 1, 1));
@@ -286,136 +288,164 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         toolBarReportTop.setFloatable(false);
         toolBarReportTop.add(btnNewReport);
 
-		mnuItemCopyTableName.setIcon(iconCopy);
-		mnuItemCopyTableName.addActionListener(buttonMenuActionListener);
-		mnuItemDeletaTableData.setIcon(iconDeleteAllTableData);
-		mnuItemDeletaTableData.setToolTipText("Delete all the table data with filter");
-		mnuItemDeletaTableData.addActionListener(buttonMenuActionListener);
+        mnuItemCopyTableName.setIcon(iconCopy);
+        mnuItemCopyTableName.addActionListener(buttonMenuActionListener);
+        mnuItemDeletaTableData.setIcon(iconDeleteAllTableData);
+        mnuItemDeletaTableData.setToolTipText("Delete all the table data with filter");
+        mnuItemDeletaTableData.addActionListener(buttonMenuActionListener);
 
-		listTableNames.addMouseListener(showPopupMouseListener);
-	}
+        listTableNames.addMouseListener(showPopupMouseListener);
 
-	/*************************************************************************************
-	/* 業務用エリア
-	/************************************************************************************/
-	ChangeConnectionListener changeConnectionListener = new ChangeConnectionListener();
-	PJTableListModel tableListModel = new PJTableListModel();
-	PJTableListModel viewListModel = new PJTableListModel();
-	PJTableListModel newBeanListModel = new PJTableListModel();
+        refreshReportList();
+    }
+
+    /*************************************************************************************
+    /* 業務用エリア
+    /************************************************************************************/
+    ChangeConnectionListener changeConnectionListener = new ChangeConnectionListener();
+    PJTableListModel tableListModel = new PJTableListModel();
+    PJTableListModel viewListModel = new PJTableListModel();
+    PJTableListModel newBeanListModel = new PJTableListModel();
     PJTableListModel reportListModel = new PJTableListModel();
 
-	String[] tabbedPaneTitles = {"テーブル", "ビュー", "Bean", "レポート"};
+    String[] tabbedPaneTitles = {"テーブル", "ビュー", "Bean", "レポート"};
 
 
-	/**
-	 * init conntions combobox
-	 */
-	private void initCmbConnectionURL() {
-		cmbConnectionURL.removeItemListener(changeConnectionListener);
-		cmbConnectionURL.removeAllItems();
-		ArrayList connectionList = ResourceManager.getPreviousConnections();
+    /**
+     * init conntions combobox
+     */
+    private void initCmbConnectionURL() {
+        cmbConnectionURL.removeItemListener(changeConnectionListener);
+        cmbConnectionURL.removeAllItems();
+        ArrayList connectionList = ResourceManager.getPreviousConnections();
 
-		if (connectionList != null) {
-			for (int i = 0; i < connectionList.size(); i++) {
-				cmbConnectionURL.addItem(connectionList.get(i));
-			}
-		}
-		if (parent != null) {
-			cmbConnectionURL.setSelectedItem(Main.getMDIMain().currentConnURL);
-		} else {
-			cmbConnectionURL.setSelectedItem(null);
-		}
+        if (connectionList != null) {
+            for (int i = 0; i < connectionList.size(); i++) {
+                cmbConnectionURL.addItem(connectionList.get(i));
+            }
+        }
+        if (parent != null) {
+            cmbConnectionURL.setSelectedItem(Main.getMDIMain().currentConnURL);
+        } else {
+            cmbConnectionURL.setSelectedItem(null);
+        }
 
-		cmbConnectionURL.addItemListener(changeConnectionListener);
-	}
+        cmbConnectionURL.addItemListener(changeConnectionListener);
+    }
 
-	/**
-	 * change connection listener
-	 */
-	class ChangeConnectionListener implements ItemListener {
-		public void itemStateChanged(ItemEvent event) {
-			if (event.getStateChange() != event.SELECTED) {
-				return;
-			}
-
-			if (MessageManager.showMessage("MCSTC012Q") != 0) {
-				SwingUtilities.invokeLater(new Runnable() {
-					public void run() {
-						cmbConnectionURL.removeItemListener(changeConnectionListener);
-						cmbConnectionURL.setSelectedItem(Main.getMDIMain().currentConnURL);
-						cmbConnectionURL.addItemListener(changeConnectionListener);
-					}
-				});
-				return;
-			}
-
-			String newConnURL = (String) cmbConnectionURL.getSelectedItem();
-
-			Connection conn = null;
-			if (newConnURL != null) {
-				try {
-					conn = ResourceManager.getConnection(newConnURL);
-				} catch (SQLException se) {
-					MessageManager.showMessage("MCSTC201E", se.getMessage());
-				}
-			}
-
-			Main.getMDIMain().closeConnection();
-			Main.getMDIMain().currentConnURL = newConnURL;
-			Main.getMDIMain().setConnection(conn);
-		}
-	}
-
-	/**
-	 * refresh the lists
-	 * if the conn is null then clear the lists
-	 */
-	public void refreshTableList(Connection conn) throws SQLException {
-		initCmbConnectionURL();
-		ArrayList tableList = null;
-		if (conn == null) {
-			tableListModel.setDataSet(null);
-			viewListModel.setDataSet(null);
-		} else {
-			tableList = DBParser.getTableLists(conn);
-			setListsValue(tableList);
-		}
-		setCountStatus();
-		setTabbedStatus(0);
-		listTableNames.clearSelection();
-		lstViewNames.clearSelection();
-		listTableNames.repaint();
-		lstViewNames.repaint();
-
-		if (tableList != null) {
-		    String[] tblNames = new String[tableList.size()];
-		    for (int i = 0; i < tableList.size(); i++) {
-		        tblNames[i] = ((TableDefineData) tableList.get(i)).getTableName();
+    /**
+     * change connection listener
+     */
+    class ChangeConnectionListener implements ItemListener {
+        public void itemStateChanged(ItemEvent event) {
+            if (event.getStateChange() != event.SELECTED) {
+                return;
             }
 
-	        ResourceManager.resetTableNameList(tblNames);
-		}
-	}
+            if (MessageManager.showMessage("MCSTC012Q") != 0) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        cmbConnectionURL.removeItemListener(changeConnectionListener);
+                        cmbConnectionURL.setSelectedItem(Main.getMDIMain().currentConnURL);
+                        cmbConnectionURL.addItemListener(changeConnectionListener);
+                    }
+                });
+                return;
+            }
 
-	/**
-	 * new bean lists, the list does not need connect to database
-	 */
-	public void createNewBean(String newBeanName) {
-		Collection beanList = newBeanListModel.getDataSet();
-		if (beanList == null) {
-			ArrayList newBeanNameList = new ArrayList();
-			newBeanListModel.setDataSet(newBeanNameList);
-		}
+            String newConnURL = (String) cmbConnectionURL.getSelectedItem();
 
-		if (newBeanListModel.contains(newBeanName)) {
-			lstNewBeanList.setSelectedValue(newBeanName, true);
-		} else {
-			newBeanListModel.add(newBeanName);
-			lstNewBeanList.setSelectedValue(newBeanName, true);
-		}
-		setCountStatus();
-		setTabbedStatus(1);
-	}
+            Connection conn = null;
+            if (newConnURL != null) {
+                try {
+                    conn = ResourceManager.getConnection(newConnURL);
+                } catch (SQLException se) {
+                    MessageManager.showMessage("MCSTC201E", se.getMessage());
+                }
+            }
+
+            Main.getMDIMain().closeConnection();
+            Main.getMDIMain().currentConnURL = newConnURL;
+            Main.getMDIMain().setConnection(conn);
+        }
+    }
+
+    /**
+     * refresh the lists
+     * if the conn is null then clear the lists
+     */
+    public void refreshTableList(Connection conn) throws SQLException {
+        initCmbConnectionURL();
+        ArrayList tableList = null;
+        if (conn == null) {
+            tableListModel.setDataSet(null);
+            viewListModel.setDataSet(null);
+        } else {
+            tableList = DBParser.getTableLists(conn);
+            setListsValue(tableList);
+        }
+        setCountStatus();
+        setTabbedStatus(0);
+        listTableNames.clearSelection();
+        lstViewNames.clearSelection();
+        listTableNames.repaint();
+        lstViewNames.repaint();
+
+        if (tableList != null) {
+            String[] tblNames = new String[tableList.size()];
+            for (int i = 0; i < tableList.size(); i++) {
+                tblNames[i] = ((TableDefineData) tableList.get(i)).getTableName();
+            }
+
+            ResourceManager.resetTableNameList(tblNames);
+        }
+    }
+
+    /**
+     * refresh the report list
+     */
+    public void refreshReportList() throws SQLException {
+        File configDir = new File(Main.configPath, "report");
+        if (!configDir.exists()) {
+            return;
+        }
+
+        ArrayList<String> reportList = new ArrayList<String>();
+        String[] files = configDir.list(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.endsWith(".xml");
+            }
+        });
+        for (String f : files) {
+            f = f.substring(0, f.lastIndexOf(".xml"));
+            reportList.add(f);
+        }
+
+        reportListModel.setDataSet(reportList);
+        lstReportList.repaint();
+
+        lblReportCounts.setText(String.valueOf(reportListModel.getSize()) + " " + tabbedPaneTitles[3]);
+    }
+
+    /**
+     * new bean lists, the list does not need connect to database
+     */
+    public void createNewBean(String newBeanName) {
+        Collection beanList = newBeanListModel.getDataSet();
+        if (beanList == null) {
+            ArrayList newBeanNameList = new ArrayList();
+            newBeanListModel.setDataSet(newBeanNameList);
+        }
+
+        if (newBeanListModel.contains(newBeanName)) {
+            lstNewBeanList.setSelectedValue(newBeanName, true);
+        } else {
+            newBeanListModel.add(newBeanName);
+            lstNewBeanList.setSelectedValue(newBeanName, true);
+        }
+        setCountStatus();
+        setTabbedStatus(1);
+    }
 
     /**
      * new report lists
@@ -439,57 +469,58 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
             reportListModel.add(reportName);
             lstReportList.setSelectedValue(reportName, true);
         }
-        setCountStatus();
+
+        lblReportCounts.setText(String.valueOf(reportListModel.getSize()) + " " + tabbedPaneTitles[3]);
     }
 
-	/**
-	 * parse name to lists
-	 */
-	private void setListsValue(ArrayList tableList) {
-		ArrayList tableNameList = new ArrayList();
-		ArrayList viewNameList = new ArrayList();
+    /**
+     * parse name to lists
+     */
+    private void setListsValue(ArrayList tableList) {
+        ArrayList tableNameList = new ArrayList();
+        ArrayList viewNameList = new ArrayList();
 
-		for (int i=0; i<tableList.size(); i++) {
-			TableDefineData tableData = (TableDefineData) tableList.get(i);
+        for (int i=0; i<tableList.size(); i++) {
+            TableDefineData tableData = (TableDefineData) tableList.get(i);
 
-			if (tableData != null) {
-				if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[0])) {
-				    if (tableData.getComment() != null && !"".equals(tableData.getComment())) {
-				        tableNameList.add(tableData.getTableName() + "(" + tableData.getComment() + ")");
-				    } else {
-				        tableNameList.add(tableData.getTableName());
-				    }
-				} else if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[1])) {
-					viewNameList.add(tableData.getTableName());
-				}
-			}
-		}
+            if (tableData != null) {
+                if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[0])) {
+                    if (tableData.getComment() != null && !"".equals(tableData.getComment())) {
+                        tableNameList.add(tableData.getTableName() + "(" + tableData.getComment() + ")");
+                    } else {
+                        tableNameList.add(tableData.getTableName());
+                    }
+                } else if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[1])) {
+                    viewNameList.add(tableData.getTableName());
+                }
+            }
+        }
 
-		tableListModel.setDataSet(tableNameList, null);
-		viewListModel.setDataSet(viewNameList);
+        tableListModel.setDataSet(tableNameList, null);
+        viewListModel.setDataSet(viewNameList);
 
-		setFilterTables(null);
-	}
+        setFilterTables(null);
+    }
 
-	/**
-	 * set hide items
-	 *
-	 */
-	void setFilterTables(HashMap hideItems) {
-		tableListModel.setHideItems(hideItems);
-		listTableNames.clearSelection();
-		listTableNames.repaint();
+    /**
+     * set hide items
+     *
+     */
+    void setFilterTables(HashMap hideItems) {
+        tableListModel.setHideItems(hideItems);
+        listTableNames.clearSelection();
+        listTableNames.repaint();
 
-		if (hideItems != null && hideItems.size() > 0) {
-			btnTablesFilter.setIcon(iconTableFilterSort);
-		} else {
-			btnTablesFilter.setIcon(iconTableClearFilterSort);
-		}
-	}
+        if (hideItems != null && hideItems.size() > 0) {
+            btnTablesFilter.setIcon(iconTableFilterSort);
+        } else {
+            btnTablesFilter.setIcon(iconTableClearFilterSort);
+        }
+    }
 
     int searchedIdx = -1;
     String preSearch = "";
-	void searchTable() {
+    void searchTable() {
         String txtForSearch = txtSearchTable.getText();
         if ("".equals(txtForSearch.trim())) {
             preSearch = "";
@@ -502,161 +533,160 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         }
         preSearch = txtForSearch;
 
-	    searchedIdx = tableListModel.like(txtForSearch, i);
-	    if (searchedIdx >= 0) {
-	        listTableNames.setSelectedIndex(searchedIdx);
-	        listTableNames.ensureIndexIsVisible(searchedIdx);
-	    }
-	}
+        searchedIdx = tableListModel.like(txtForSearch, i);
+        if (searchedIdx >= 0) {
+            listTableNames.setSelectedIndex(searchedIdx);
+            listTableNames.ensureIndexIsVisible(searchedIdx);
+        }
+    }
 
-	/**
-	 * set counts
-	 */
-	private void setCountStatus() {
-		lblTableCounts.setText(String.valueOf(tableListModel.getSize()) + " " + tabbedPaneTitles[0]);
-		lblViewCounts.setText(String.valueOf(viewListModel.getSize()) + " " + tabbedPaneTitles[1]);
-		lblNewBeanCounts.setText(String.valueOf(newBeanListModel.getSize()) + " " + tabbedPaneTitles[2]);
-		lblReportCounts.setText(String.valueOf(reportListModel.getSize()) + " " + tabbedPaneTitles[3]);
-	}
+    /**
+     * set counts
+     */
+    private void setCountStatus() {
+        lblTableCounts.setText(String.valueOf(tableListModel.getSize()) + " " + tabbedPaneTitles[0]);
+        lblViewCounts.setText(String.valueOf(viewListModel.getSize()) + " " + tabbedPaneTitles[1]);
+        lblNewBeanCounts.setText(String.valueOf(newBeanListModel.getSize()) + " " + tabbedPaneTitles[2]);
+    }
 
-	/**
-	 * set selected tabb
-	 */
-	private void setTabbedStatus(int flag) {
-		if (flag == 0) {
-			tabbedPanelMain.setSelectedIndex(0);
-		} else if (flag == 1) {
-			tabbedPanelMain.setSelectedIndex(2);
-		}
-	}
+    /**
+     * set selected tabb
+     */
+    private void setTabbedStatus(int flag) {
+        if (flag == 0) {
+            tabbedPanelMain.setSelectedIndex(0);
+        } else if (flag == 1) {
+            tabbedPanelMain.setSelectedIndex(2);
+        }
+    }
 
-	/**
-	 * refresh selected table panel
-	 */
-	private void refreshSelectedTableName() {
-		String selectedValue = (String) listTableNames.getSelectedValue();
-		String fullName = selectedValue;
+    /**
+     * refresh selected table panel
+     */
+    private void refreshSelectedTableName() {
+        String selectedValue = (String) listTableNames.getSelectedValue();
+        String fullName = selectedValue;
 
-		if (selectedValue != null) {
-		    if (selectedValue.indexOf("(") > 0) {
-		        selectedValue = selectedValue.substring(0, selectedValue.indexOf("("));
-		    }
-			PanelRight existsPanel = parent.getSelectedRightPanel();
+        if (selectedValue != null) {
+            if (selectedValue.indexOf("(") > 0) {
+                selectedValue = selectedValue.substring(0, selectedValue.indexOf("("));
+            }
+            PanelRight existsPanel = parent.getSelectedRightPanel();
 
-			if (existsPanel == null || !selectedValue.equals(existsPanel.getTableName())) {
-				existsPanel = new PanelRight();
+            if (existsPanel == null || !selectedValue.equals(existsPanel.getTableName())) {
+                existsPanel = new PanelRight();
 
-				PanelColumnDesc panelColumnDesc = new PanelColumnDesc();
-				panelColumnDesc.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
-				existsPanel.panelColumnDesc = panelColumnDesc;
-				
-				PanelIndexInfos panelIndexInfos = new PanelIndexInfos();
-				panelIndexInfos.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
-				existsPanel.panelIndexInfos = panelIndexInfos;
+                PanelColumnDesc panelColumnDesc = new PanelColumnDesc();
+                panelColumnDesc.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
+                existsPanel.panelColumnDesc = panelColumnDesc;
 
-				PanelKeyReference panelKeyReference = new PanelKeyReference();
-				panelKeyReference.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
-				existsPanel.panelKeyReference = panelKeyReference;
+                PanelIndexInfos panelIndexInfos = new PanelIndexInfos();
+                panelIndexInfos.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
+                existsPanel.panelIndexInfos = panelIndexInfos;
 
-				PanelBeanCreate panelBeanCreate = new PanelBeanCreate();
-				panelBeanCreate.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
-				existsPanel.panelBeanCreate = panelBeanCreate;
+                PanelKeyReference panelKeyReference = new PanelKeyReference();
+                panelKeyReference.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
+                existsPanel.panelKeyReference = panelKeyReference;
 
-				PanelTableModify panelTableModify = new PanelTableModify();
-				panelTableModify.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
-				existsPanel.panelTableModify = panelTableModify;
+                PanelBeanCreate panelBeanCreate = new PanelBeanCreate();
+                panelBeanCreate.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
+                existsPanel.panelBeanCreate = panelBeanCreate;
 
-				existsPanel.setTableName(PJConst.BEAN_TYPE_TABLE, fullName);
-				existsPanel.packAll();
-			}
-			parent.showRightPanel(existsPanel);
+                PanelTableModify panelTableModify = new PanelTableModify();
+                panelTableModify.setParam(PJConst.BEAN_TYPE_TABLE, selectedValue);
+                existsPanel.panelTableModify = panelTableModify;
 
-			if (lastSelectTable != existsPanel) {
-				existsPanel.setSelected();
+                existsPanel.setTableName(PJConst.BEAN_TYPE_TABLE, fullName);
+                existsPanel.packAll();
+            }
+            parent.showRightPanel(existsPanel);
 
-				if (lastSelectTable != null) {
-					lastSelectTable.clearSelected();
-				}
+            if (lastSelectTable != existsPanel) {
+                existsPanel.setSelected();
 
-				lastSelectTable = existsPanel;
-			}
-		} else {
-			parent.showRightPanel(parent.rightPanel);
-		}
-	}
+                if (lastSelectTable != null) {
+                    lastSelectTable.clearSelected();
+                }
 
-	/**
-	 * refresh selected view panel
-	 */
-	private void refreshSelectedViewName() {
-		String selectedValue = (String) lstViewNames.getSelectedValue();
+                lastSelectTable = existsPanel;
+            }
+        } else {
+            parent.showRightPanel(parent.rightPanel);
+        }
+    }
 
-		if (selectedValue != null) {
-			PanelRight existsPanel = new PanelRight();
+    /**
+     * refresh selected view panel
+     */
+    private void refreshSelectedViewName() {
+        String selectedValue = (String) lstViewNames.getSelectedValue();
 
-			PanelColumnDesc panelColumnDesc = new PanelColumnDesc();
-			panelColumnDesc.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
-			existsPanel.panelColumnDesc = panelColumnDesc;
+        if (selectedValue != null) {
+            PanelRight existsPanel = new PanelRight();
 
-			PanelKeyReference panelKeyReference = new PanelKeyReference();
-			panelKeyReference.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
-			existsPanel.panelKeyReference = panelKeyReference;
+            PanelColumnDesc panelColumnDesc = new PanelColumnDesc();
+            panelColumnDesc.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
+            existsPanel.panelColumnDesc = panelColumnDesc;
 
-			PanelBeanCreate panelBeanCreate = new PanelBeanCreate();
-			panelBeanCreate.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
-			existsPanel.panelBeanCreate = panelBeanCreate;
+            PanelKeyReference panelKeyReference = new PanelKeyReference();
+            panelKeyReference.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
+            existsPanel.panelKeyReference = panelKeyReference;
 
-			PanelTableModify panelTableModify = new PanelTableModify();
-			panelTableModify.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
-			existsPanel.panelTableModify = panelTableModify;
+            PanelBeanCreate panelBeanCreate = new PanelBeanCreate();
+            panelBeanCreate.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
+            existsPanel.panelBeanCreate = panelBeanCreate;
 
-			existsPanel.setTableName(PJConst.BEAN_TYPE_VIEW, selectedValue);
-			existsPanel.packAll();
-			parent.showRightPanel(existsPanel);
+            PanelTableModify panelTableModify = new PanelTableModify();
+            panelTableModify.setParam(PJConst.BEAN_TYPE_VIEW, selectedValue);
+            existsPanel.panelTableModify = panelTableModify;
 
-			if (lastSelectView != existsPanel) {
-				existsPanel.setSelected();
+            existsPanel.setTableName(PJConst.BEAN_TYPE_VIEW, selectedValue);
+            existsPanel.packAll();
+            parent.showRightPanel(existsPanel);
 
-				if (lastSelectView != null) {
-					lastSelectView.clearSelected();
-				}
+            if (lastSelectView != existsPanel) {
+                existsPanel.setSelected();
 
-				lastSelectView = existsPanel;
-			}
-		} else {
-			parent.showRightPanel(parent.rightPanel);
-		}
-	}
+                if (lastSelectView != null) {
+                    lastSelectView.clearSelected();
+                }
 
-	/**
-	 * refresh selected new bean panel
-	 */
-	private void refreshSelectedNewBean() {
-		String selectedValue = (String) lstNewBeanList.getSelectedValue();
+                lastSelectView = existsPanel;
+            }
+        } else {
+            parent.showRightPanel(parent.rightPanel);
+        }
+    }
 
-		if (selectedValue != null) {
-			PanelRight existsPanel = new PanelRight();
+    /**
+     * refresh selected new bean panel
+     */
+    private void refreshSelectedNewBean() {
+        String selectedValue = (String) lstNewBeanList.getSelectedValue();
 
-			PanelBeanCreate existsBeanPanel = (PanelBeanCreate) 
-			        parent.getExistsRightBeanPanel(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
-			if (existsBeanPanel != null) {
-				existsPanel.panelBeanCreate = existsBeanPanel;
-			} else {
-				PanelBeanCreate panelBeanCreate = new PanelBeanCreate();
-				panelBeanCreate.setParam(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
-				panelBeanCreate.refreshDisplay();
-				existsPanel.panelBeanCreate = panelBeanCreate;
-				parent.saveRightBeanPanel(PJConst.BEAN_TYPE_NEWBEAN, selectedValue, panelBeanCreate);
-			}
+        if (selectedValue != null) {
+            PanelRight existsPanel = new PanelRight();
 
-			existsPanel.setTableName(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
-			existsPanel.packAll();
-			existsPanel.disableToolBar();
-			parent.showRightPanel(existsPanel);
-		} else {
-			parent.showRightPanel(parent.rightPanel);
-		}
-	}
+            PanelBeanCreate existsBeanPanel = (PanelBeanCreate)
+                    parent.getExistsRightBeanPanel(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
+            if (existsBeanPanel != null) {
+                existsPanel.panelBeanCreate = existsBeanPanel;
+            } else {
+                PanelBeanCreate panelBeanCreate = new PanelBeanCreate();
+                panelBeanCreate.setParam(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
+                panelBeanCreate.refreshDisplay();
+                existsPanel.panelBeanCreate = panelBeanCreate;
+                parent.saveRightBeanPanel(PJConst.BEAN_TYPE_NEWBEAN, selectedValue, panelBeanCreate);
+            }
+
+            existsPanel.setTableName(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
+            existsPanel.packAll();
+            existsPanel.disableToolBar();
+            parent.showRightPanel(existsPanel);
+        } else {
+            parent.showRightPanel(parent.rightPanel);
+        }
+    }
 
     /**
      * refresh selected report panel
@@ -689,252 +719,252 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         }
     }
 
-	/**
-	 * delete selected new bean panel
-	 */
-	private void deleteSelectedNewBean(String beanType, String beanName) {
-		parent.removeRightPanel(beanType, beanName);
+    /**
+     * delete selected new bean panel
+     */
+    private void deleteSelectedNewBean(String beanType, String beanName) {
+        parent.removeRightPanel(beanType, beanName);
 
-		if (PJConst.BEAN_TYPE_TABLE.equals(beanType)) {
-			tableListModel.remove(beanName);
-			listTableNames.clearSelection();
-			listTableNames.repaint();
-		} else if (PJConst.BEAN_TYPE_VIEW.equals(beanType)) {
-			viewListModel.remove(beanName);
-			lstViewNames.clearSelection();
-			lstViewNames.repaint();
-		} else if (PJConst.BEAN_TYPE_NEWBEAN.equals(beanType)) {
-			newBeanListModel.remove(beanName);
-			lstNewBeanList.clearSelection();
-			lstNewBeanList.repaint();
-		}
+        if (PJConst.BEAN_TYPE_TABLE.equals(beanType)) {
+            tableListModel.remove(beanName);
+            listTableNames.clearSelection();
+            listTableNames.repaint();
+        } else if (PJConst.BEAN_TYPE_VIEW.equals(beanType)) {
+            viewListModel.remove(beanName);
+            lstViewNames.clearSelection();
+            lstViewNames.repaint();
+        } else if (PJConst.BEAN_TYPE_NEWBEAN.equals(beanType)) {
+            newBeanListModel.remove(beanName);
+            lstNewBeanList.clearSelection();
+            lstNewBeanList.repaint();
+        }
 
-		setCountStatus();
-	}
+        setCountStatus();
+    }
 
-	/*************************************************************************************
-	/* 事件処理用エリア
-	/************************************************************************************/
-	/**
-	 * button action
-	 */
-	class ButtonMenuActionListener implements ActionListener {
-		public void actionPerformed(ActionEvent e) {
-			Object item = e.getSource();
+    /*************************************************************************************
+    /* 事件処理用エリア
+    /************************************************************************************/
+    /**
+     * button action
+     */
+    class ButtonMenuActionListener implements ActionListener {
+        public void actionPerformed(ActionEvent e) {
+            Object item = e.getSource();
 
-			if (item == btnTablesFilter) {
-				showTablesFilter();
-			} else if (item == mnuItemDeletaTableData) {
-				deleteSelectedTableData();
-			} else if (item == mnuItemCopyTableName) {
-				String selectedValue = (String) listTableNames.getSelectedValue();
-				copy(selectedValue);
-			} else if (item == btnNewReport) {
-			    createReport();
-			}
-		}
-	}
+            if (item == btnTablesFilter) {
+                showTablesFilter();
+            } else if (item == mnuItemDeletaTableData) {
+                deleteSelectedTableData();
+            } else if (item == mnuItemCopyTableName) {
+                String selectedValue = (String) listTableNames.getSelectedValue();
+                copy(selectedValue);
+            } else if (item == btnNewReport) {
+                createReport();
+            }
+        }
+    }
 
-	/**
-	 * table list mouse click event
-	 * show popupmenu
-	 *
-	 */
-	class ShowPopupMouseListener extends MouseAdapter {
-		public void mouseClicked(MouseEvent e) {
-			showPopupMenu(e);
-		}
-	}
+    /**
+     * table list mouse click event
+     * show popupmenu
+     *
+     */
+    class ShowPopupMouseListener extends MouseAdapter {
+        public void mouseClicked(MouseEvent e) {
+            showPopupMenu(e);
+        }
+    }
 
-	/**
-	 * show filter tables dialog
-	 *
-	 */
-	void showTablesFilter() {
-		DialogFilterTables dialogFilterTables = new DialogFilterTables();
-		dialogFilterTables.initResources(tableListModel.getDataSet(), tableListModel.getHideItems());
-		dialogFilterTables.addParamTransferListener(this);
-		dialogFilterTables.setVisible(true);
-		dialogFilterTables.removeParamTransferListener(this);
-	}
+    /**
+     * show filter tables dialog
+     *
+     */
+    void showTablesFilter() {
+        DialogFilterTables dialogFilterTables = new DialogFilterTables();
+        dialogFilterTables.initResources(tableListModel.getDataSet(), tableListModel.getHideItems());
+        dialogFilterTables.addParamTransferListener(this);
+        dialogFilterTables.setVisible(true);
+        dialogFilterTables.removeParamTransferListener(this);
+    }
 
-	/**
-	 * clear selected table data
-	 *
-	 */
-	void deleteSelectedTableData() {
-		String selectedValue = (String) listTableNames.getSelectedValue();
+    /**
+     * clear selected table data
+     *
+     */
+    void deleteSelectedTableData() {
+        String selectedValue = (String) listTableNames.getSelectedValue();
 
-		if (selectedValue != null) {
-			PanelRight existsPanel = parent.getSelectedRightPanel();
-			if (existsPanel != null) {
-				PanelTableModify panelTableModify = existsPanel.panelTableModify;
+        if (selectedValue != null) {
+            PanelRight existsPanel = parent.getSelectedRightPanel();
+            if (existsPanel != null) {
+                PanelTableModify panelTableModify = existsPanel.panelTableModify;
 
-				if (panelTableModify != null) {
-					panelTableModify.deleteAllData();
-				}
-			}
-		}
-	}
+                if (panelTableModify != null) {
+                    panelTableModify.deleteAllData();
+                }
+            }
+        }
+    }
 
-	/**
-	 * show popup menu by right mouse click
-	 */
-	void showPopupMenu(MouseEvent e) {
-		if (SwingUtilities.isRightMouseButton(e)) {
-			Object obj = e.getSource();
+    /**
+     * show popup menu by right mouse click
+     */
+    void showPopupMenu(MouseEvent e) {
+        if (SwingUtilities.isRightMouseButton(e)) {
+            Object obj = e.getSource();
 
-			if (obj == listTableNames) {
-				int orgSelectedIndex = listTableNames.getSelectedIndex();
-				int clickIndex = listTableNames.locationToIndex(e.getPoint());
+            if (obj == listTableNames) {
+                int orgSelectedIndex = listTableNames.getSelectedIndex();
+                int clickIndex = listTableNames.locationToIndex(e.getPoint());
 
-				if (clickIndex != orgSelectedIndex) {
-					listTableNames.setSelectedIndex(clickIndex);
-				}
-			}
+                if (clickIndex != orgSelectedIndex) {
+                    listTableNames.setSelectedIndex(clickIndex);
+                }
+            }
 
-			// avoid out of window, compute the show point
-			Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-			Point p = e.getPoint();
-			SwingUtilities.convertPointToScreen(p, (Component) obj);
-			int showX = e.getX();
-			int showY = e.getY();
-			int menuHeight = 0;
-			int menuWidth = 0;
+            // avoid out of window, compute the show point
+            Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
+            Point p = e.getPoint();
+            SwingUtilities.convertPointToScreen(p, (Component) obj);
+            int showX = e.getX();
+            int showY = e.getY();
+            int menuHeight = 0;
+            int menuWidth = 0;
 
-			if (obj == listTableNames) {
-				menuHeight = tableNamesPopupMenu.getHeight();
-				menuWidth = tableNamesPopupMenu.getWidth();
-			}
+            if (obj == listTableNames) {
+                menuHeight = tableNamesPopupMenu.getHeight();
+                menuWidth = tableNamesPopupMenu.getWidth();
+            }
 
-			if (p.getX() + menuWidth > screenSize.getWidth()) {
-				showX = showX - menuWidth;
-			}
-			if (p.getY() + menuHeight > screenSize.getHeight()) {
-				showY = showY - menuHeight;
-			}
+            if (p.getX() + menuWidth > screenSize.getWidth()) {
+                showX = showX - menuWidth;
+            }
+            if (p.getY() + menuHeight > screenSize.getHeight()) {
+                showY = showY - menuHeight;
+            }
 
-			tableNamesPopupMenu.show((JComponent) obj, showX, showY);
-		}
-	}
+            tableNamesPopupMenu.show((JComponent) obj, showX, showY);
+        }
+    }
 
-	/**
-	 * select tables action
-	 *
-	 */
-	void listTableNames_SelectChanged(ListSelectionEvent e) {
-		if (!e.getValueIsAdjusting()) {
-			refreshSelectedTableName();
-		}
-	}
+    /**
+     * select tables action
+     *
+     */
+    void listTableNames_SelectChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+            refreshSelectedTableName();
+        }
+    }
 
-	void lstViewNames_SelectChanged(ListSelectionEvent e) {
-		if (!e.getValueIsAdjusting()) {
-			refreshSelectedViewName();
-		}
-	}
+    void lstViewNames_SelectChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+            refreshSelectedViewName();
+        }
+    }
 
-	void lstNewBeanList_SelectChanged(ListSelectionEvent e) {
-		if (!e.getValueIsAdjusting()) {
-			refreshSelectedNewBean();
-		}
-	}
+    void lstNewBeanList_SelectChanged(ListSelectionEvent e) {
+        if (!e.getValueIsAdjusting()) {
+            refreshSelectedNewBean();
+        }
+    }
 
     void lstReportList_SelectChanged(ListSelectionEvent e) {
         if (!e.getValueIsAdjusting()) {
             refreshSelectedReport();
         }
     }
-	
-	void listTableNames_keyPressed(KeyEvent e) {
-		String selectedValue = (String) listTableNames.getSelectedValue();
 
-		if (selectedValue != null) {
-			int keyCode = e.getKeyCode();
-			if (keyCode == KeyEvent.VK_DELETE) {
-				/*
-				if (MessageManager.showMessage("MCSTC007Q") == 0) {
-					deleteSelectedNewBean(PJConst.BEAN_TYPE_TABLE, selectedValue);
-				}
-				*/
-			} else if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
-				copy(selectedValue);
-			}
-		}
-	}
+    void listTableNames_keyPressed(KeyEvent e) {
+        String selectedValue = (String) listTableNames.getSelectedValue();
 
-	void lstViewNames_keyPressed(KeyEvent e) {
-		String selectedValue = (String) lstViewNames.getSelectedValue();
-
-		if (selectedValue != null) {
-			int keyCode = e.getKeyCode();
-			if (keyCode == KeyEvent.VK_DELETE) {
-				if (MessageManager.showMessage("MCSTC007Q") == 0) {
-					deleteSelectedNewBean(PJConst.BEAN_TYPE_VIEW, selectedValue);
-				}
-			} else if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
-				copy(selectedValue);
-			}
-		}
-	}
-
-	void lstNewBeanList_keyPressed(KeyEvent e) {
-		String selectedValue = (String) lstNewBeanList.getSelectedValue();
-
-		if (selectedValue != null) {
-			int keyCode = e.getKeyCode();
-			if (keyCode == KeyEvent.VK_DELETE) {
-				if (MessageManager.showMessage("MCSTC007Q") == 0) {
-					deleteSelectedNewBean(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
-				}
-			} else if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
-				copy(selectedValue);
-			}
-		}
-	}
-
-	void tabbedPanelMain_stateChanged(ChangeEvent e) {
-		refreshSelectdRightPanel();
-	}
-
-	public void refreshSelectdRightPanel() {
-		int selectedIndex = tabbedPanelMain.getSelectedIndex();
-
-		Main.getMDIMain().setColumnOperationStatus(false);
-
-		if (selectedIndex == 0) {
-			refreshSelectedTableName();
-		} else if (selectedIndex == 1) {
-			refreshSelectedViewName();
-		} else if (selectedIndex == 2) {
-			refreshSelectedNewBean();
-		} else if (selectedIndex == 3) {
-		    refreshSelectedReport();
+        if (selectedValue != null) {
+            int keyCode = e.getKeyCode();
+            if (keyCode == KeyEvent.VK_DELETE) {
+                /*
+                if (MessageManager.showMessage("MCSTC007Q") == 0) {
+                    deleteSelectedNewBean(PJConst.BEAN_TYPE_TABLE, selectedValue);
+                }
+                */
+            } else if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
+                copy(selectedValue);
+            }
         }
-	}
+    }
 
-	String[] getTableList() {
-		ArrayList list = new ArrayList();
-		Collection tableCollection = tableListModel.getDataSet();
-		Collection viewCollection = viewListModel.getDataSet();
+    void lstViewNames_keyPressed(KeyEvent e) {
+        String selectedValue = (String) lstViewNames.getSelectedValue();
 
-		if (tableCollection != null && !tableCollection.isEmpty()) {
-			list.addAll(tableCollection);
-		}
-		if (viewCollection != null && !viewCollection.isEmpty()) {
-			list.addAll(viewCollection);
-		}
+        if (selectedValue != null) {
+            int keyCode = e.getKeyCode();
+            if (keyCode == KeyEvent.VK_DELETE) {
+                if (MessageManager.showMessage("MCSTC007Q") == 0) {
+                    deleteSelectedNewBean(PJConst.BEAN_TYPE_VIEW, selectedValue);
+                }
+            } else if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
+                copy(selectedValue);
+            }
+        }
+    }
 
-		String[] nameList = new String[list.size()];
+    void lstNewBeanList_keyPressed(KeyEvent e) {
+        String selectedValue = (String) lstNewBeanList.getSelectedValue();
 
-		for (int i = 0; i < list.size(); i++) {
-			nameList[i] = (String) list.get(i);
-		}
+        if (selectedValue != null) {
+            int keyCode = e.getKeyCode();
+            if (keyCode == KeyEvent.VK_DELETE) {
+                if (MessageManager.showMessage("MCSTC007Q") == 0) {
+                    deleteSelectedNewBean(PJConst.BEAN_TYPE_NEWBEAN, selectedValue);
+                }
+            } else if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
+                copy(selectedValue);
+            }
+        }
+    }
 
-		return nameList;
-	}
+    void tabbedPanelMain_stateChanged(ChangeEvent e) {
+        refreshSelectdRightPanel();
+    }
 
-	class MyListCellRenderer extends DefaultListCellRenderer {
+    public void refreshSelectdRightPanel() {
+        int selectedIndex = tabbedPanelMain.getSelectedIndex();
+
+        Main.getMDIMain().setColumnOperationStatus(false);
+
+        if (selectedIndex == 0) {
+            refreshSelectedTableName();
+        } else if (selectedIndex == 1) {
+            refreshSelectedViewName();
+        } else if (selectedIndex == 2) {
+            refreshSelectedNewBean();
+        } else if (selectedIndex == 3) {
+            refreshSelectedReport();
+        }
+    }
+
+    String[] getTableList() {
+        ArrayList list = new ArrayList();
+        Collection tableCollection = tableListModel.getDataSet();
+        Collection viewCollection = viewListModel.getDataSet();
+
+        if (tableCollection != null && !tableCollection.isEmpty()) {
+            list.addAll(tableCollection);
+        }
+        if (viewCollection != null && !viewCollection.isEmpty()) {
+            list.addAll(viewCollection);
+        }
+
+        String[] nameList = new String[list.size()];
+
+        for (int i = 0; i < list.size(); i++) {
+            nameList[i] = (String) list.get(i);
+        }
+
+        return nameList;
+    }
+
+    class MyListCellRenderer extends DefaultListCellRenderer {
 
         /* (非 Javadoc)
          * @see javax.swing.ListCellRenderer#getListCellRendererComponent(javax.swing.JList, java.lang.Object, int, boolean, boolean)
@@ -955,31 +985,31 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
             return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         }
-	}
+    }
 
-	private synchronized void copy(String content) {
-		Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+    private synchronized void copy(String content) {
+        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
 
-		JTextArea tempArea = new JTextArea(content);
-		tempArea.selectAll();
-		tempArea.copy();
-	}
+        JTextArea tempArea = new JTextArea(content);
+        tempArea.selectAll();
+        tempArea.copy();
+    }
 
-	/**
-	 * 遷移画面からのイベント
-	 *
-	 * @param pe ParamTransferEvent
-	 */
-	public void paramTransfered(ParamTransferEvent pe) {
-		int opFlag = pe.getOpFlag();
+    /**
+     * 遷移画面からのイベント
+     *
+     * @param pe ParamTransferEvent
+     */
+    public void paramTransfered(ParamTransferEvent pe) {
+        int opFlag = pe.getOpFlag();
 
-		switch (opFlag) {
-			case PJConst.WINDOW_FILTERTABLES:
-				Object param = (Object) pe.getParam();
-				setFilterTables((HashMap) param);
-				break;
-			default:
-				break;
-		}
-	}
+        switch (opFlag) {
+            case PJConst.WINDOW_FILTERTABLES:
+                Object param = (Object) pe.getParam();
+                setFilterTables((HashMap) param);
+                break;
+            default:
+                break;
+        }
+    }
 }

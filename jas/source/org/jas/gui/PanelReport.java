@@ -905,7 +905,7 @@ public class PanelReport extends JPanel implements Refreshable {
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {
                         try {
-                            Desktop.getDesktop().edit(tempFile);
+                            Desktop.getDesktop().open(tempFile);
                         } catch (Exception e) {
                             e.printStackTrace();
                             MessageManager.showMessage("MCSTC203E", e.getMessage());

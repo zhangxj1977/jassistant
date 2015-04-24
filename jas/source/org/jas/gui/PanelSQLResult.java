@@ -15,6 +15,12 @@ import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
 import javax.swing.table.TableModel;
 
+import org.apache.poi.ss.usermodel.Cell;
+import org.apache.poi.ss.usermodel.CellStyle;
+import org.apache.poi.ss.usermodel.Font;
+import org.apache.poi.ss.usermodel.IndexedColors;
+import org.apache.poi.ss.usermodel.Row;
+import org.apache.poi.ss.usermodel.Sheet;
 import org.jas.base.DBTableModel;
 import org.jas.base.PJDBDataTable;
 import org.jas.base.PJDBDataTableRowHeader;
@@ -25,6 +31,7 @@ import org.jas.common.PJConst;
 import org.jas.db.DBParser;
 import org.jas.util.ImageManager;
 import org.jas.util.MessageManager;
+import org.jas.util.StringUtil;
 
 /**
  * SQLé¿çsåãâ 
@@ -42,6 +49,9 @@ public class PanelSQLResult extends JPanel {
     JButton btnLeftTopCorner = new JButton();
     PJDBDataTableRowHeader rowHeader = new PJDBDataTableRowHeader(tblScriptResult);
     TableSelectionRowListener selectionRowListener = new TableSelectionRowListener();
+
+    String name = null;
+    String desc = null;
 
     public PanelSQLResult() {
 
@@ -76,10 +86,12 @@ public class PanelSQLResult extends JPanel {
     /**
      * process query result show
      */
-    public boolean processResultShow(String sql) {
+    public boolean processResultShow(String name, String desc, String sql) {
         if (sql == null || sql.trim().equals("")) {
             return false;
         }
+        this.name = name;
+        this.desc = desc;
 
         try {
             Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, true);
@@ -168,5 +180,107 @@ public class PanelSQLResult extends JPanel {
         }
     }
 
+    public int exportToExcel(Sheet s, int startRow) {
+        CellStyle titleCs = s.getWorkbook().createCellStyle();
+        Font f1 = s.getWorkbook().createFont();
+        f1.setBoldweight(Font.BOLDWEIGHT_BOLD);
+        f1.setFontName("ÇlÇr ÇoÉSÉVÉbÉN");
+        titleCs.setFont(f1);
 
+        Row r = s.createRow(startRow++);
+        Cell c = r.createCell(0);
+        c.setCellStyle(titleCs);
+
+        String title = StringUtil.nvl(name);
+        if (desc != null && !"".equals(desc.trim())) {
+            title = title + "(" + StringUtil.nvl(desc) + ")";
+        }
+        c.setCellValue(title);
+
+        TableModel model = tblScriptResult.getModel();
+        if (model instanceof DBTableModel) {
+            DBTableModel dbModel = (DBTableModel) model;
+            Vector columnName = dbModel.getRealColumnName();
+            Vector typeData = dbModel.getColumnJavaType();
+        
+            CellStyle headerCs = s.getWorkbook().createCellStyle();
+            headerCs.setBorderLeft(CellStyle.BORDER_THIN);
+            headerCs.setBorderTop(CellStyle.BORDER_THIN);
+            headerCs.setBorderRight(CellStyle.BORDER_THIN);
+            headerCs.setBorderBottom(CellStyle.BORDER_THIN);
+            headerCs.setFillForegroundColor(IndexedColors.SKY_BLUE.getIndex());
+            headerCs.setFillPattern(CellStyle.SOLID_FOREGROUND);
+
+            // header
+            r = s.createRow(startRow++);
+            for (int i = 0; i < columnName.size(); i++) {
+                setCellValue(r, i, (String) columnName.get(i), headerCs);
+            }
+
+            CellStyle dataCs = s.getWorkbook().createCellStyle();
+            dataCs.setBorderLeft(CellStyle.BORDER_THIN);
+            dataCs.setBorderTop(CellStyle.BORDER_THIN);
+            dataCs.setBorderRight(CellStyle.BORDER_THIN);
+            dataCs.setBorderBottom(CellStyle.BORDER_THIN);
+
+            // data
+            int rowCount = dbModel.getRowCount();
+            for (int i = 0; i < rowCount; i++) {
+                r = s.createRow(startRow++);
+                Vector rowData = dbModel.getRowData(i);
+                for (int j = 0; j < columnName.size(); j++) {
+                    String strValue = StringUtil.getStringValue((Class) typeData.get(j),
+                            rowData.get(j), false);
+                    setCellValue(r, j, strValue, dataCs);
+                }
+            }
+        }
+
+        return startRow;
+    }
+
+    private void setCellValue(Row r, int col, String o, CellStyle cs) {
+        Cell c = r.createCell(col);
+        c.setCellStyle(cs);
+        c.setCellValue(o);
+    }
+
+    public void exportToCSV(StringBuilder sb) {
+        sb.append(StringUtil.nvl(name));
+        if (desc != null && !"".equals(desc.trim())) {
+            sb.append("(" + StringUtil.nvl(desc) + ")");
+        }
+        sb.append("\r\n");
+
+        TableModel model = tblScriptResult.getModel();
+        if (model instanceof DBTableModel) {
+            DBTableModel dbModel = (DBTableModel) model;
+            Vector columnName = dbModel.getRealColumnName();
+            Vector typeData = dbModel.getColumnJavaType();
+            
+            // header
+            for (int i = 0; i < columnName.size(); i++) {
+                sb.append(columnName.get(i));
+                if (i < columnName.size() - 1) {
+                    sb.append("\t");
+                }
+            }
+            sb.append("\r\n");
+            
+            // data
+            int rowCount = dbModel.getRowCount();
+            for (int i = 0; i < rowCount; i++) {
+                Vector rowData = dbModel.getRowData(i);
+                for (int j = 0; j < columnName.size(); j++) {
+                    String strValue = StringUtil.getStringValue((Class) typeData.get(j),
+                            rowData.get(j), false);
+                    sb.append(strValue);
+                    if (j < columnName.size() - 1) {
+                        sb.append("\t");
+                    }
+                }
+                sb.append("\r\n");
+            }
+        }
+    }
 }

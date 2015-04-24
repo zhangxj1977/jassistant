@@ -3,9 +3,13 @@ package org.jas.gui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Desktop;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.GridLayout;
+import java.awt.Toolkit;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ComponentAdapter;
@@ -15,9 +19,9 @@ import java.awt.event.FocusListener;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
-import java.io.FileWriter;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Vector;
 
@@ -44,6 +48,9 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
+import org.apache.poi.ss.usermodel.Sheet;
+import org.apache.poi.ss.usermodel.Workbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jas.base.PJDBCellEditor;
 import org.jas.base.PJEditorTextField;
 import org.jas.base.PJSQLTextPane;
@@ -53,6 +60,7 @@ import org.jas.common.Refreshable;
 import org.jas.model.ReportParam;
 import org.jas.model.ReportSQLDesc;
 import org.jas.model.ReportTemplate;
+import org.jas.util.DateUtil;
 import org.jas.util.ImageManager;
 import org.jas.util.MessageManager;
 
@@ -179,12 +187,22 @@ public class PanelReport extends JPanel implements Refreshable {
         btnAllExecute.setText("一括実行");
         btnAllExecute.setIcon(iconSQLAllExec);
         btnAllExecute.setBounds(15, 10, 100, 25);
+        btnAllExecute.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                processAllSQL();
+            }
+        });
         panelBottomRight.add(btnAllExecute);
 
         ImageIcon iconExport = ImageManager.createImageIcon("exporttofile.gif");
         btnExport.setText("エクスポート");
         btnExport.setIcon(iconExport);
         btnExport.setBounds(120, 10, 120, 25);
+        btnExport.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                exportResultData();
+            }
+        });
         panelBottomRight.add(btnExport);
 
         rdoExportExcel.setText("Excel");
@@ -456,6 +474,8 @@ public class PanelReport extends JPanel implements Refreshable {
         txtSQLEdit.setText(sql);
         txtSQLEdit.resetDefaultFontStyle();
         setSQLLabel();
+
+        setSelectSql();
     }
 
     private void setSQLLabel() {
@@ -521,28 +541,80 @@ public class PanelReport extends JPanel implements Refreshable {
 
         btnExecuteSQL.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                processCurrentSQL();
+                String selectSql = txtSQLEdit.getText();
+                String name = lblSqlName.getText();
+                String desc = lblSqlDesc.getText();
+                processCurrentSQL(name, desc, selectSql);
+            }
+        });
+        
+        txtSQLEdit.setUndoRedoButton(btnUndo, btnRedo);
+        btnSQLFormat.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                txtSQLEdit.formatSql();
             }
         });
     }
 
-    void processCurrentSQL() {
-        String selectSql = txtSQLEdit.getText();
+    void processCurrentSQL(String name, String desc, String selectSql) {
+        if (name == null || "".equals(name.trim())) {
+            MessageManager.showMessage("MCSTC001E", "SQL名前");
+        }
+        for (int i = 0; i < vecParamData.size(); i++) {
+            String paramName = (String) ((Vector) vecParamData.get(i)).get(IDX_PARAMNAM);
+            String paramValue = (String) ((Vector) vecParamData.get(i)).get(IDX_PARAMVAL);
+            
+            selectSql = selectSql.replaceAll(
+                    "#" + paramName + "#", paramValue);
+        }
+
         if (selectSql != null && !selectSql.trim().equals("")) {
             PanelSQLResult panelResult = new PanelSQLResult();
-            boolean b = panelResult.processResultShow(selectSql);
+            boolean b = panelResult.processResultShow(name, desc, selectSql);
 
             if (b) {
-                String title = lblSqlName.getText();
-                int idx = tbpResult.indexOfTab(title);
+                int idx = tbpResult.indexOfTab(name);
                 if (idx >= 0) {
                     tbpResult.setComponentAt(idx, panelResult);
                 } else {
-                    tbpResult.add(title, panelResult);
-                    idx = tbpResult.indexOfTab(title);
+                    tbpResult.add(name, panelResult);
+                    idx = tbpResult.indexOfTab(name);
                 }
                 tbpResult.setSelectedIndex(idx);
             }
+        }
+    }
+
+    void processAllSQL() {
+        tbpResult.removeAll();
+        for (int i = 0; i < vecSqlData.size(); i++) {
+            boolean isSkip = (Boolean) ((Vector) vecSqlData.get(i)).get(IDX_SQLSKIP);
+            String name = (String) ((Vector) vecSqlData.get(i)).get(IDX_SQLNAME);
+            String desc = (String) ((Vector) vecSqlData.get(i)).get(IDX_SQLDESC);
+            String sql = (String) ((Vector) vecSqlData.get(i)).get(IDX_SQLBODY);
+
+            if (!isSkip) {
+                if (name == null || "".equals(name.trim())) {
+                    MessageManager.showMessage("MCSTC001E", "SQL名前");
+                    tblSQLList.changeSelection(i, 0, false, false);
+                    return;
+                }
+
+                processCurrentSQL(name, desc, sql);
+            }
+        }
+        setSelectSql();
+    }
+
+    void setSelectSql() {
+        int selectedRow = tblSQLList.getSelectedRow();
+        if (selectedRow < 0) {
+            return;
+        }
+        String name = (String) tblSQLList.getValueAt(selectedRow, IDX_SQLNAME);
+        int idx = tbpResult.indexOfTab(name);
+        if (idx >= 0) {
+            tbpResult.setSelectedIndex(idx);
         }
     }
 
@@ -797,6 +869,79 @@ public class PanelReport extends JPanel implements Refreshable {
                 } catch (Exception e) {}
             }
         }
+    }
+
+    void exportResultData() {
+        int cnt = tbpResult.getTabCount();
+        if (cnt < 1) {
+            MessageManager.showMessage("MCSTC303E", "");
+            return;
+        }
+
+        if (rdoExportExcel.isSelected()) {
+            Workbook wb = new XSSFWorkbook();
+            Sheet sheet = wb.createSheet(currentReportName);
+
+            int startRow = 0;
+            for (int i = 0; i < cnt; i++) {
+                PanelSQLResult pnlResult = 
+                        (PanelSQLResult) tbpResult.getComponentAt(i);
+                
+                startRow = pnlResult.exportToExcel(sheet, startRow);
+                if (i < cnt - 1) {
+                    startRow++;
+                }
+            }
+
+            FileOutputStream fos = null;
+            try {
+                SimpleDateFormat sdfDateTime = new SimpleDateFormat("yyyyMMddHHmmss");
+                String ts = sdfDateTime.format(DateUtil.getSysDateTimestamp());
+                final File tempFile = File.createTempFile(currentReportName + "_" + ts, ".xlsx");
+                fos = new FileOutputStream(tempFile);
+                wb.write(fos);
+                wb.close();
+
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        try {
+                            Desktop.getDesktop().edit(tempFile);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            MessageManager.showMessage("MCSTC203E", e.getMessage());
+                        }
+                    }
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+                MessageManager.showMessage("MCSTC203E", e.getMessage());
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (Exception e) {}
+                }
+            }
+            
+        } else if (rdoExportCsv.isSelected()) {
+            StringBuilder sb = new StringBuilder();
+            for (int i = 0; i < cnt; i++) {
+                PanelSQLResult pnlResult = 
+                        (PanelSQLResult) tbpResult.getComponentAt(i);
+                
+                pnlResult.exportToCSV(sb);
+                
+                if (i < cnt - 1) {
+                    sb.append("\r\n");
+                }
+            }
+            Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+            StringSelection stringSelection = new StringSelection(sb.toString());
+            clipboard.setContents(stringSelection, stringSelection);
+
+            MessageManager.showMessage("MCSTC304I", "");
+        }
+
     }
 
     /**

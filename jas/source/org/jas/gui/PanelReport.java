@@ -82,6 +82,7 @@ public class PanelReport extends JPanel implements Refreshable {
     ImageIcon iconUndo = ImageManager.createImageIcon("undo.gif");
     ImageIcon iconRedo = ImageManager.createImageIcon("redo.gif");
     ImageIcon iconSQLFormat = ImageManager.createImageIcon("sqlbuilder.gif");
+    ImageIcon iconClear = ImageManager.createImageIcon("deletealltabledata.gif");
 
     JPanel panelMain = new JPanel();
     JPanel panelBottom = new JPanel();
@@ -131,6 +132,7 @@ public class PanelReport extends JPanel implements Refreshable {
     JButton btnSave = new JButton();
     JButton btnAllExecute = new JButton();
     JButton btnExport = new JButton();
+    JButton btnClearResult = new JButton();
 
     ButtonGroup grpExportType = new ButtonGroup();
     JRadioButton rdoExportExcel = new JRadioButton();
@@ -178,7 +180,7 @@ public class PanelReport extends JPanel implements Refreshable {
         btnSave.setBounds(15, 10, 80, 25);
         btnSave.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                saveReportTemplate();
+                saveReportTemplate(true);
             }
         });
         panelBottomLeft.add(btnSave);
@@ -215,6 +217,16 @@ public class PanelReport extends JPanel implements Refreshable {
         rdoExportCsv.setBounds(305, 10, 60, 25);
         panelBottomRight.add(rdoExportExcel);
         panelBottomRight.add(rdoExportCsv);
+
+        btnClearResult.setText("Œ‹‰ÊƒNƒŠƒA");
+        btnClearResult.setIcon(iconClear);
+        btnClearResult.setBounds(375, 10, 120, 25);
+        btnClearResult.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                clearResultData();
+            }
+        });
+        panelBottomRight.add(btnClearResult);
 
         panelMain.add(slpMain, BorderLayout.CENTER);
         slpMain.setDividerSize(5);
@@ -547,7 +559,7 @@ public class PanelReport extends JPanel implements Refreshable {
                 processCurrentSQL(name, desc, selectSql);
             }
         });
-        
+
         txtSQLEdit.setUndoRedoButton(btnUndo, btnRedo);
         btnSQLFormat.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -563,7 +575,7 @@ public class PanelReport extends JPanel implements Refreshable {
         for (int i = 0; i < vecParamData.size(); i++) {
             String paramName = (String) ((Vector) vecParamData.get(i)).get(IDX_PARAMNAM);
             String paramValue = (String) ((Vector) vecParamData.get(i)).get(IDX_PARAMVAL);
-            
+
             selectSql = selectSql.replaceAll(
                     "#" + paramName + "#", paramValue);
         }
@@ -825,6 +837,54 @@ public class PanelReport extends JPanel implements Refreshable {
         }
     }
 
+    public boolean copyReport(String newReportName) {
+        saveReportTemplate(false);
+
+        File templateFile = new File(configDir, currentReportName + ".xml");
+        File newFile = new File(configDir, newReportName + ".xml");
+        OutputStreamWriter fos = null;
+        InputStreamReader fis = null;
+        try {
+            fis = new InputStreamReader(new FileInputStream(templateFile),  "UTF-8");
+            fos = new OutputStreamWriter(new FileOutputStream(newFile),  "UTF-8");
+
+            int c = 0;
+            char[] buf = new char[256];
+            while ((c = fis.read(buf)) > 0) {
+                fos.write(buf, 0, c);
+            }
+            fis.close();
+            fos.flush();
+            fos.close();
+            return true;
+        } catch (Exception e) {
+            MessageManager.showMessage("MCSTC203E", e.getMessage());
+            e.printStackTrace();
+        } finally {
+            if (fis != null) {
+                try {
+                    fis.close();
+                } catch (Exception e) {}
+            }
+            if (fos != null) {
+                try {
+                    fos.close();
+                } catch (Exception e) {}
+            }
+        }
+        return false;
+    }
+
+    public boolean deleteReport() {
+        File templateFile = new File(configDir, currentReportName + ".xml");
+
+        if (templateFile.exists()) {
+            return templateFile.delete();
+        }
+
+        return true;
+    }
+
     private void saveGUIData() {
         ArrayList<ReportParam> paramList = new ArrayList<ReportParam>();
         for (int i = 0; i < vecParamData.size(); i++) {
@@ -848,7 +908,7 @@ public class PanelReport extends JPanel implements Refreshable {
         reportTemplate.setSqlList(sqlList);
     }
 
-    private void saveReportTemplate() {
+    private void saveReportTemplate(boolean isNeedShowMsg) {
         saveGUIData();
 
         File templateFile = new File(configDir, currentReportName + ".xml");
@@ -858,7 +918,9 @@ public class PanelReport extends JPanel implements Refreshable {
             XStream xs = new XStream();
             xs.toXML(reportTemplate, fos);
 
-            MessageManager.showMessage("MCSTC302I", templateFile.getAbsolutePath());
+            if (isNeedShowMsg) {
+                MessageManager.showMessage("MCSTC302I", templateFile.getAbsolutePath());
+            }
         } catch (Exception e) {
             MessageManager.showMessage("MCSTC203E", e.getMessage());
             e.printStackTrace();
@@ -884,9 +946,9 @@ public class PanelReport extends JPanel implements Refreshable {
 
             int startRow = 0;
             for (int i = 0; i < cnt; i++) {
-                PanelSQLResult pnlResult = 
+                PanelSQLResult pnlResult =
                         (PanelSQLResult) tbpResult.getComponentAt(i);
-                
+
                 startRow = pnlResult.exportToExcel(sheet, startRow);
                 if (i < cnt - 1) {
                     startRow++;
@@ -922,15 +984,15 @@ public class PanelReport extends JPanel implements Refreshable {
                     } catch (Exception e) {}
                 }
             }
-            
+
         } else if (rdoExportCsv.isSelected()) {
             StringBuilder sb = new StringBuilder();
             for (int i = 0; i < cnt; i++) {
-                PanelSQLResult pnlResult = 
+                PanelSQLResult pnlResult =
                         (PanelSQLResult) tbpResult.getComponentAt(i);
-                
+
                 pnlResult.exportToCSV(sb);
-                
+
                 if (i < cnt - 1) {
                     sb.append("\r\n");
                 }
@@ -942,6 +1004,10 @@ public class PanelReport extends JPanel implements Refreshable {
             MessageManager.showMessage("MCSTC304I", "");
         }
 
+    }
+
+    void clearResultData() {
+        tbpResult.removeAll();
     }
 
     /**

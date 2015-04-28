@@ -358,7 +358,7 @@ public class DialogImportTableData extends PJDialogBase {
                         } else {
                             String sql = (String) rowDatas.get(i);
                             if (sql != null && !sql.trim().equals("")) {
-                                DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, false);
+                                DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, false, null);
                             }
                         }
                         progressBarImport.setValue(i);

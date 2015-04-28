@@ -22,6 +22,16 @@ public class ReportTemplate implements Serializable {
     private ArrayList<ReportSQLDesc> sqlList = null;
 
     /**
+     * 出力タイプ excel/csv
+     */
+    private String exportType = null;
+    
+    /**
+     * 論理名出力フラグ
+     */
+    private boolean isOutComment = true;
+
+    /**
      * @return name
      */
     public String getName() {
@@ -61,6 +71,34 @@ public class ReportTemplate implements Serializable {
      */
     public void setSqlList(ArrayList<ReportSQLDesc> sqlList) {
         this.sqlList = sqlList;
+    }
+
+    /**
+     * @return exportType
+     */
+    public String getExportType() {
+        return exportType;
+    }
+
+    /**
+     * @param exportType セットする exportType
+     */
+    public void setExportType(String exportType) {
+        this.exportType = exportType;
+    }
+
+    /**
+     * @return isOutComment
+     */
+    public boolean isOutComment() {
+        return isOutComment;
+    }
+
+    /**
+     * @param isOutComment セットする isOutComment
+     */
+    public void setOutComment(boolean isOutComment) {
+        this.isOutComment = isOutComment;
     }
 
     /* (非 Javadoc)

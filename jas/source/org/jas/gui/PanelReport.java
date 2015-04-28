@@ -1,6 +1,7 @@
 package org.jas.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
@@ -28,6 +29,7 @@ import java.util.Vector;
 import javax.swing.ButtonGroup;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
@@ -86,8 +88,6 @@ public class PanelReport extends JPanel implements Refreshable {
 
     JPanel panelMain = new JPanel();
     JPanel panelBottom = new JPanel();
-    JPanel panelBottomLeft = new JPanel();
-    JPanel panelBottomRight = new JPanel();
 
     JSplitPane slpMain = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
     JPanel panelInput = new JPanel();
@@ -137,6 +137,7 @@ public class PanelReport extends JPanel implements Refreshable {
     ButtonGroup grpExportType = new ButtonGroup();
     JRadioButton rdoExportExcel = new JRadioButton();
     JRadioButton rdoExportCsv = new JRadioButton();
+    JCheckBox chkExportComment = new JCheckBox();
 
     SQLCellEditorListener sqlCellEditorListener = new SQLCellEditorListener();
 
@@ -165,14 +166,10 @@ public class PanelReport extends JPanel implements Refreshable {
         this.setLayout(new BorderLayout());
 
         panelMain.setLayout(new BorderLayout());
-        panelBottom.setLayout(new GridLayout(1, 2));
+        panelBottom.setLayout(null);
         this.add(panelMain, BorderLayout.CENTER);
         this.add(panelBottom, BorderLayout.SOUTH);
         panelBottom.setPreferredSize(new Dimension(this.getWidth(), 40));
-        panelBottomLeft.setLayout(null);
-        panelBottomRight.setLayout(null);
-        panelBottom.add(panelBottomLeft);
-        panelBottom.add(panelBottomRight);
 
         ImageIcon iconSave = ImageManager.createImageIcon("savetabledata.gif");
         btnSave.setText("保存");
@@ -183,29 +180,29 @@ public class PanelReport extends JPanel implements Refreshable {
                 saveReportTemplate(true);
             }
         });
-        panelBottomLeft.add(btnSave);
+        panelBottom.add(btnSave);
 
         ImageIcon iconSQLAllExec = ImageManager.createImageIcon("sqlexecute.gif");
         btnAllExecute.setText("一括実行");
         btnAllExecute.setIcon(iconSQLAllExec);
-        btnAllExecute.setBounds(15, 10, 100, 25);
+        btnAllExecute.setBounds(150, 10, 100, 25);
         btnAllExecute.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 processAllSQL();
             }
         });
-        panelBottomRight.add(btnAllExecute);
+        panelBottom.add(btnAllExecute);
 
         ImageIcon iconExport = ImageManager.createImageIcon("exporttofile.gif");
         btnExport.setText("エクスポート");
         btnExport.setIcon(iconExport);
-        btnExport.setBounds(120, 10, 120, 25);
+        btnExport.setBounds(255, 10, 120, 25);
         btnExport.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 exportResultData();
             }
         });
-        panelBottomRight.add(btnExport);
+        panelBottom.add(btnExport);
 
         rdoExportExcel.setText("Excel");
         rdoExportCsv.setText("CSV");
@@ -213,20 +210,25 @@ public class PanelReport extends JPanel implements Refreshable {
         grpExportType.add(rdoExportCsv);
         rdoExportExcel.setSelected(true);
 
-        rdoExportExcel.setBounds(245, 10, 60, 25);
-        rdoExportCsv.setBounds(305, 10, 60, 25);
-        panelBottomRight.add(rdoExportExcel);
-        panelBottomRight.add(rdoExportCsv);
+        rdoExportExcel.setBounds(380, 10, 60, 25);
+        rdoExportCsv.setBounds(440, 10, 60, 25);
+        panelBottom.add(rdoExportExcel);
+        panelBottom.add(rdoExportCsv);
+
+        chkExportComment.setText("論理名");
+        chkExportComment.setBounds(500, 10, 60, 25);
+        chkExportComment.setSelected(true);
+        panelBottom.add(chkExportComment);
 
         btnClearResult.setText("結果クリア");
         btnClearResult.setIcon(iconClear);
-        btnClearResult.setBounds(375, 10, 120, 25);
+        btnClearResult.setBounds(570, 10, 120, 25);
         btnClearResult.addActionListener(new ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 clearResultData();
             }
         });
-        panelBottomRight.add(btnClearResult);
+        panelBottom.add(btnClearResult);
 
         panelMain.add(slpMain, BorderLayout.CENTER);
         slpMain.setDividerSize(5);
@@ -835,6 +837,13 @@ public class PanelReport extends JPanel implements Refreshable {
             }
             tblSQLList.repaint();
         }
+        
+        if (rdoExportExcel.getText().equals(reportTemplate.getExportType())) {
+            rdoExportExcel.setSelected(true);
+        } else if (rdoExportCsv.getText().equals(reportTemplate.getExportType())) {
+            rdoExportCsv.setSelected(true);
+        }
+        chkExportComment.setSelected(reportTemplate.isOutComment());
     }
 
     public boolean copyReport(String newReportName) {
@@ -906,6 +915,12 @@ public class PanelReport extends JPanel implements Refreshable {
         reportTemplate.setName(currentReportName);
         reportTemplate.setParamList(paramList);
         reportTemplate.setSqlList(sqlList);
+        if (rdoExportExcel.isSelected()) {
+            reportTemplate.setExportType(rdoExportExcel.getText());
+        } else if (rdoExportCsv.isSelected()) {
+            reportTemplate.setExportType(rdoExportCsv.getText());
+        }
+        reportTemplate.setOutComment(chkExportComment.isSelected());
     }
 
     private void saveReportTemplate(boolean isNeedShowMsg) {
@@ -949,7 +964,7 @@ public class PanelReport extends JPanel implements Refreshable {
                 PanelSQLResult pnlResult =
                         (PanelSQLResult) tbpResult.getComponentAt(i);
 
-                startRow = pnlResult.exportToExcel(sheet, startRow);
+                startRow = pnlResult.exportToExcel(sheet, startRow, chkExportComment.isSelected());
                 if (i < cnt - 1) {
                     startRow++;
                 }
@@ -991,7 +1006,7 @@ public class PanelReport extends JPanel implements Refreshable {
                 PanelSQLResult pnlResult =
                         (PanelSQLResult) tbpResult.getComponentAt(i);
 
-                pnlResult.exportToCSV(sb);
+                pnlResult.exportToCSV(sb, chkExportComment.isSelected());
 
                 if (i < cnt - 1) {
                     sb.append("\r\n");
@@ -1003,7 +1018,6 @@ public class PanelReport extends JPanel implements Refreshable {
 
             MessageManager.showMessage("MCSTC304I", "");
         }
-
     }
 
     void clearResultData() {

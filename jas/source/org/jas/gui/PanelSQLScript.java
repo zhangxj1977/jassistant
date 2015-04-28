@@ -572,7 +572,7 @@ public class PanelSQLScript extends JSplitPane {
 
         try {
             long beginTime = System.currentTimeMillis();
-            Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, false);
+            Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, false, null);
             long endTime = System.currentTimeMillis();
             long executeTime = endTime - beginTime;
 

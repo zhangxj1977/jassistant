@@ -334,6 +334,8 @@ public class DBParser {
                 if (sep >= 0) {
                     scheme = tableName.substring(0, sep);
                     tableName = tableName.substring(sep + 1);
+                } else {
+                    scheme = getDB2CurrentSchema(conn);
                 }
                 if (scheme != null) {
                     HashMap extRemarks = getDB2ColumnRemarks(conn, scheme, tableName);
@@ -357,6 +359,19 @@ public class DBParser {
         data.addAll(getMoreQueryData(rs, limit, keyVector));
 
         return data;
+    }
+
+    private static String getDB2CurrentSchema(Connection conn) throws SQLException {
+        Statement stmt = conn.createStatement();
+        ResultSet rs = stmt.executeQuery("select current_schema from sysibm.sysdummy1");
+        String schema = null;
+        if (rs.next()) {
+            schema = rs.getString(1);
+        }
+        rs.close();
+        stmt.close();
+
+        return schema;
     }
 
     /**
@@ -633,6 +648,41 @@ public class DBParser {
         return descList;
     }
 
+    public static HashMap getColumnRemark(Connection conn, String tableName) throws SQLException {
+        if (conn == null) {
+            throw new SQLException("Connection is null");
+        }
+
+        DatabaseMetaData dbMetaData = conn.getMetaData();
+
+        // get other descriptions
+        String userName = dbMetaData.getUserName();
+        String driverName = dbMetaData.getDriverName();
+
+        HashMap extRemarks = null;
+
+        if (isDB(dbMetaData, "Oracle")
+                || isDB(dbMetaData, "jConnect")) {
+            if (isDB(dbMetaData, "Oracle")) {
+                extRemarks = getOracleColumnRemarks(conn, tableName);
+            }
+        } else if (isDB(dbMetaData, "IBM ")) {
+            int sep = tableName.indexOf(".");
+            String scheme = null;
+            if (sep >= 0) {
+                scheme = tableName.substring(0, sep);
+                tableName = tableName.substring(sep + 1);
+            }
+            if (scheme != null) {
+                extRemarks= getDB2ColumnRemarks(conn, scheme, tableName);
+            }
+        } else {
+            extRemarks = new HashMap();
+        }
+
+        return extRemarks;
+    }
+
     /**
      * get primary key map
      * the key is the column name, value is the key sequence
@@ -887,10 +937,16 @@ public class DBParser {
     /**
      * execute the sql and return the result
      * the result may be a resultset or a int.
+     * 
+     * tableName:used to get logic name 
      */
-    public static Object getResultByScript(Connection conn, String sql, boolean isQueryOnly) throws SQLException {
+    public static Object getResultByScript(Connection conn, String sql, boolean isQueryOnly, String tableName) throws SQLException {
         if (conn == null) {
             throw new SQLException("Connection is null");
+        }
+
+        if (tableName != null) {
+            tableName = tableName.toUpperCase();
         }
 
         Object retValue;
@@ -905,13 +961,13 @@ public class DBParser {
             stmt = conn.createStatement();
             if (isQueryOnly) {
                 ResultSet rs = new ResultSetWrap(stmt.executeQuery(sql), stmt);
-                retValue = getQueryData(conn.getMetaData(), conn, null, rs, -1, null);
+                retValue = getQueryData(conn.getMetaData(), conn, tableName, rs, -1, null);
             } else {
                 boolean isResultSet = stmt.execute(sql);
 
                 if (isResultSet) {
                     ResultSet rs = new ResultSetWrap(stmt.getResultSet(), stmt);
-                    retValue = getQueryData(conn.getMetaData(), conn, null, rs, -1, null);
+                    retValue = getQueryData(conn.getMetaData(), conn, tableName, rs, -1, null);
                 } else {
                     retValue = new Integer(stmt.getUpdateCount());
                 }

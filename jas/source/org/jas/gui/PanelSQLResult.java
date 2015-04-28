@@ -94,7 +94,7 @@ public class PanelSQLResult extends JPanel {
         this.desc = desc;
 
         try {
-            Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, true);
+            Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, true, name);
 
             if (value instanceof Vector) {
                 Vector data = (Vector) value;
@@ -180,7 +180,7 @@ public class PanelSQLResult extends JPanel {
         }
     }
 
-    public int exportToExcel(Sheet s, int startRow) {
+    public int exportToExcel(Sheet s, int startRow, boolean isExportComment) {
         CellStyle titleCs = s.getWorkbook().createCellStyle();
         Font f1 = s.getWorkbook().createFont();
         f1.setBoldweight(Font.BOLDWEIGHT_BOLD);
@@ -200,9 +200,10 @@ public class PanelSQLResult extends JPanel {
         TableModel model = tblScriptResult.getModel();
         if (model instanceof DBTableModel) {
             DBTableModel dbModel = (DBTableModel) model;
+            Vector columnRemark = dbModel.getColumnComment();
             Vector columnName = dbModel.getRealColumnName();
             Vector typeData = dbModel.getColumnJavaType();
-        
+
             CellStyle headerCs = s.getWorkbook().createCellStyle();
             headerCs.setBorderLeft(CellStyle.BORDER_THIN);
             headerCs.setBorderTop(CellStyle.BORDER_THIN);
@@ -212,6 +213,12 @@ public class PanelSQLResult extends JPanel {
             headerCs.setFillPattern(CellStyle.SOLID_FOREGROUND);
 
             // header
+            if (isExportComment) {
+                r = s.createRow(startRow++);
+                for (int i = 0; i < columnRemark.size(); i++) {
+                    setCellValue(r, i, (String) columnRemark.get(i), headerCs);
+                }
+            }
             r = s.createRow(startRow++);
             for (int i = 0; i < columnName.size(); i++) {
                 setCellValue(r, i, (String) columnName.get(i), headerCs);
@@ -245,7 +252,7 @@ public class PanelSQLResult extends JPanel {
         c.setCellValue(o);
     }
 
-    public void exportToCSV(StringBuilder sb) {
+    public void exportToCSV(StringBuilder sb, boolean isExportComment) {
         sb.append(StringUtil.nvl(name));
         if (desc != null && !"".equals(desc.trim())) {
             sb.append("(" + StringUtil.nvl(desc) + ")");
@@ -255,10 +262,20 @@ public class PanelSQLResult extends JPanel {
         TableModel model = tblScriptResult.getModel();
         if (model instanceof DBTableModel) {
             DBTableModel dbModel = (DBTableModel) model;
+            Vector columnRemark = dbModel.getColumnComment();
             Vector columnName = dbModel.getRealColumnName();
             Vector typeData = dbModel.getColumnJavaType();
             
             // header
+            if (isExportComment) {
+                for (int i = 0; i < columnRemark.size(); i++) {
+                    sb.append(columnRemark.get(i));
+                    if (i < columnRemark.size() - 1) {
+                        sb.append("\t");
+                    }
+                }
+                sb.append("\r\n");
+            }
             for (int i = 0; i < columnName.size(); i++) {
                 sb.append(columnName.get(i));
                 if (i < columnName.size() - 1) {

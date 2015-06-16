@@ -27,6 +27,7 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.WindowConstants;
 import javax.swing.border.Border;
 import javax.swing.event.ListSelectionEvent;
@@ -205,6 +206,12 @@ public class DialogOpenConnection extends PJDialogBase implements ParamTransferL
 			}
 		});
 		setDefaultButton(btnOK);
+		SwingUtilities.invokeLater(new Runnable() {
+            
+            public void run() {
+                btnOK.requestFocus();                
+            }
+        });
 	}
 
 	/*************************************************************************************

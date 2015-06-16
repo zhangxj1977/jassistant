@@ -27,6 +27,7 @@ public class PanelRight extends JPanel {
 	PanelKeyReference panelKeyReference = null;
 	PanelBeanCreate panelBeanCreate = null;
     PanelReport panelReport= null;
+    PanelDataHistory panelHistory= null;
 	PanelTableModify panelTableModify = null;
 	int selectedIndex = 0;
 	StateChangeListener stateChangeListener = new StateChangeListener();
@@ -105,6 +106,9 @@ public class PanelRight extends JPanel {
 		}
         if (panelReport != null) {
             tabPanelMain.add("  Report  ", panelReport);
+        }
+        if (panelHistory != null) {
+            tabPanelMain.add("  History  ", panelHistory);
         }
 		tabPanelMain.addChangeListener(stateChangeListener);
 	}

@@ -756,19 +756,24 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         String selectedValue = (String) lstReportList.getSelectedValue();
 
         if (selectedValue != null) {
-            PanelRight existsPanel = new PanelRight();
-
-            PanelReport existsBeanPanel = (PanelReport)
+            PanelRight existsPanel = (PanelRight)
                     parent.getExistsRightBeanPanel(PJConst.BEAN_TYPE_REPORT, selectedValue);
-            if (existsBeanPanel != null) {
-                existsPanel.panelReport = existsBeanPanel;
-            } else {
+            
+            if (existsPanel == null) {
+                existsPanel = new PanelRight(); 
                 PanelReport panelReport = new PanelReport();
                 panelReport.setSize(800, this.getHeight() - 40);
                 panelReport.setParam(PJConst.BEAN_TYPE_REPORT, selectedValue);
                 panelReport.refreshDisplay();
                 existsPanel.panelReport = panelReport;
-                parent.saveRightBeanPanel(PJConst.BEAN_TYPE_REPORT, selectedValue, panelReport);
+
+                PanelDataHistory panelHistory = new PanelDataHistory();
+                panelHistory.setSize(800, this.getHeight() - 40);
+                panelHistory.setParam(PJConst.BEAN_TYPE_REPORT, selectedValue);
+                panelHistory.refreshDisplay();
+                existsPanel.panelHistory = panelHistory;
+
+                parent.saveRightBeanPanel(PJConst.BEAN_TYPE_REPORT, selectedValue, existsPanel);
             }
 
             existsPanel.setTableName(PJConst.BEAN_TYPE_REPORT, selectedValue);

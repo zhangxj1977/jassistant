@@ -1,7 +1,6 @@
 package org.jas.gui;
 
 import java.awt.BorderLayout;
-import java.awt.Checkbox;
 import java.awt.Color;
 import java.awt.Component;
 import java.awt.Desktop;
@@ -51,8 +50,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.table.AbstractTableModel;
 
 import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
 import org.jas.base.PJDBCellEditor;
 import org.jas.base.PJEditorTextField;
 import org.jas.base.PJSQLTextPane;
@@ -956,7 +954,7 @@ public class PanelReport extends JPanel implements Refreshable {
         }
 
         if (rdoExportExcel.isSelected()) {
-            Workbook wb = new XSSFWorkbook();
+            SXSSFWorkbook wb = new SXSSFWorkbook();
             Sheet sheet = wb.createSheet(currentReportName);
 
             int startRow = 0;
@@ -978,6 +976,7 @@ public class PanelReport extends JPanel implements Refreshable {
                 fos = new FileOutputStream(tempFile);
                 wb.write(fos);
                 wb.close();
+                wb.dispose();
 
                 SwingUtilities.invokeLater(new Runnable() {
                     public void run() {

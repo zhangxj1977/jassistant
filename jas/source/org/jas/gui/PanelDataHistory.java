@@ -25,9 +25,12 @@ import javax.swing.JCheckBox;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JRadioButton;
+import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JToolBar;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
@@ -40,7 +43,9 @@ import org.apache.poi.ss.usermodel.Sheet;
 import org.apache.poi.ss.usermodel.Workbook;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 import org.jas.base.PJTableCellRender;
+import org.jas.base.RollOverButton;
 import org.jas.common.Refreshable;
+import org.jas.gui.PanelReport.IndexCellRender;
 import org.jas.model.ReportTemplate;
 import org.jas.util.DateUtil;
 import org.jas.util.ImageManager;
@@ -63,7 +68,7 @@ public class PanelDataHistory extends JPanel implements Refreshable {
     JPanel panelBottom = new JPanel();
 
     JSplitPane slpMain = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-    JPanel panelInput = new JPanel();
+    JPanel panelHistory = new JPanel();
     JPanel panelResult = new JPanel();
     JTabbedPane tbpResult = new JTabbedPane(SwingConstants.TOP, JTabbedPane.SCROLL_TAB_LAYOUT);
 
@@ -82,9 +87,11 @@ public class PanelDataHistory extends JPanel implements Refreshable {
     ReportTemplate reportTemplate = new ReportTemplate();
     static File dataDir = new File("data");
 
+    JTable tblHistory = new JTable();
+    HistoryTableModel historyModel = new HistoryTableModel();
     PJTableCellRender defaultCellRender = new PJTableCellRender();
     String[] historyHeaders = new String[]{"No", "é¿çséûä‘", "îıçl"};
-    int[] historyWidth = new int[]{20, 200, 300};
+    int[] historyWidth = new int[]{40, 160, 300};
     Vector vecHistoryData = new Vector();
     int IDX_HISTNDX = 0;
     int IDX_HISTTIM = 1;
@@ -153,15 +160,11 @@ public class PanelDataHistory extends JPanel implements Refreshable {
 
         panelMain.add(slpMain, BorderLayout.CENTER);
         slpMain.setDividerSize(5);
-        slpMain.setTopComponent(panelInput);
+        slpMain.setTopComponent(panelHistory);
         slpMain.setBottomComponent(panelResult);
-
-        panelResult.setLayout(new BorderLayout());
-        panelResult.add(tbpResult);
-
-        panelInput.setLayout(new BorderLayout());
-
         slpMain.setBorder(new BevelBorder(BevelBorder.LOWERED));
+
+        initPanelHistory();
         initPanelResult();
 
         this.addComponentListener(new ComponentAdapter() {
@@ -171,17 +174,48 @@ public class PanelDataHistory extends JPanel implements Refreshable {
         });
     }
 
-    void processCurrentResult(String name) {
+    private void initPanelHistory() {
+        panelHistory.setLayout(new BorderLayout());
+        panelHistory.setBorder(new TitledBorder("óöóàÍóó"));
+        
+        JToolBar toolBarHistory = new JToolBar();
+        JScrollPane scpHistory = new JScrollPane();
+        panelHistory.add(toolBarHistory, BorderLayout.NORTH);
+        panelHistory.add(scpHistory, BorderLayout.CENTER);
+
+        toolBarHistory.setFloatable(false);
+        RollOverButton btnDeleteHistory = new RollOverButton();
+        btnDeleteHistory.setIcon(iconRemoveRow);
+        btnDeleteHistory.setToolTipText("óöóÇçÌèú");
+        toolBarHistory.add(btnDeleteHistory);
+        
+        scpHistory.getViewport().add(tblHistory);
+        tblHistory.setModel(historyModel);
+        tblHistory.setRowHeight(18);
+        tblHistory.setDefaultRenderer(Object.class, defaultCellRender);
+        tblHistory.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tblHistory.setColumnSelectionAllowed(false);
+        tblHistory.getTableHeader().setReorderingAllowed(false);
+        tblHistory.setAutoResizeMode(JTable.AUTO_RESIZE_SUBSEQUENT_COLUMNS);
+
+        for (int i = 0; i < historyWidth.length; i++) {
+            tblHistory.getColumnModel().getColumn(i).setPreferredWidth(historyWidth[i]);
+        }
+        tblHistory.getColumn(historyHeaders[IDX_HISTNDX]).setCellRenderer(new IndexCellRender());
+        tblHistory.getColumn(historyHeaders[IDX_HISTNDX]).setMaxWidth(60);
+        tblHistory.getColumn(historyHeaders[IDX_HISTTIM]).setMaxWidth(200);
     }
 
     private void initPanelResult() {
-
         panelResult.setLayout(new BorderLayout());
         panelResult.setBorder(new TitledBorder("åãâ è⁄ç◊"));
 
         panelResult.add(tbpResult, BorderLayout.CENTER);
     }
 
+
+    void processCurrentResult(String name) {
+    }
 
     /**
      * add one history data

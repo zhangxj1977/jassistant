@@ -17,7 +17,10 @@ import java.awt.event.MouseEvent;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Vector;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -27,12 +30,15 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
+import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JTextPane;
 import javax.swing.JToolBar;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
 import javax.swing.border.TitledBorder;
@@ -64,6 +70,7 @@ import org.jas.util.StringUtil;
  */
 public class PanelSQLScript extends JSplitPane {
     ImageIcon iconSQLExecute = ImageManager.createImageIcon("sqlexecute.gif");
+    ImageIcon iconSQLExecuteMulti = ImageManager.createImageIcon("sqlexecutemulti.gif");
     ImageIcon iconCommit = ImageManager.createImageIcon("commit.gif");
     ImageIcon iconUndo = ImageManager.createImageIcon("undo.gif");
     ImageIcon iconRedo = ImageManager.createImageIcon("redo.gif");
@@ -74,11 +81,13 @@ public class PanelSQLScript extends JSplitPane {
     ImageIcon iconEditOneRow = ImageManager.createImageIcon("editonerow.gif");
     ImageIcon iconResultSave = ImageManager.createImageIcon("savetabledata.gif");
     ImageIcon iconReplaceParams = ImageManager.createImageIcon("replaceparams.gif");
+    ImageIcon iconClearTextResult = ImageManager.createImageIcon("clearresult.gif");
     BorderLayout mainBrderLayout = new BorderLayout();
     JPanel panelSQLLeft = new JPanel();
     JPanel panelSQLRight = new JPanel();
     JPanel panelSQLScriptInput = new JPanel();
-    JPanel panelSQLResult = new JPanel();
+    JPanel panelSQLTableResult = new JPanel();
+    JPanel panelSQLTextResult = new JPanel();
     BorderLayout borderLayoutInput = new BorderLayout();
     BorderLayout borderLayoutResult = new BorderLayout();
     JSplitPane panelSplitInput = new JSplitPane();
@@ -89,19 +98,24 @@ public class PanelSQLScript extends JSplitPane {
     BorderLayout borderLayoutScriptInput = new BorderLayout();
     PJSQLTextPane txtPanelSQLScript = new PJSQLTextPane();
     JTextPane txtPanelSQLParam = new JTextPane();
-    JToolBar toolBarResult = new JToolBar();
+    JToolBar toolBarTableResult = new JToolBar();
+    JToolBar toolBarTextResult = new JToolBar();
     JScrollPane scpResultTable = new JScrollPane();
     ScrollChangeListener scrollChangeListener = new ScrollChangeListener();
-    JTable tblScriptResult = new PJDBDataTable();
+    JTable tblTableResult = new PJDBDataTable();
     PJTableCellRender dbTableCellRender = new PJTableCellRender();
     Border border1;
+    JTextArea txtScriptResult = new JTextArea();
+    JScrollPane scpScriptResult = new JScrollPane();
+    JTabbedPane tbpResult = new JTabbedPane();
     String lastSQL = null;
     TitledBorder titledBorder1;
     JToolBar toolBarSQL = new JToolBar();
     JButton btnLeftTopCorner = new JButton();
-    PJDBDataTableRowHeader rowHeader = new PJDBDataTableRowHeader(tblScriptResult);
+    PJDBDataTableRowHeader rowHeader = new PJDBDataTableRowHeader(tblTableResult);
     TableSelectionRowListener selectionRowListener = new TableSelectionRowListener();
     RollOverButton btnExecuteSQL = new RollOverButton();
+    RollOverButton btnExecuteSQLMulti = new RollOverButton();
     RollOverButton btnUndo = new RollOverButton();
     RollOverButton btnRedo = new RollOverButton();
     RollOverButton btnCommit = new RollOverButton();
@@ -110,6 +124,7 @@ public class PanelSQLScript extends JSplitPane {
     RollOverButton btnSQLBuilder = new RollOverButton();
     RollOverButton btnShowUsefulInfo = new RollOverButton();
     RollOverButton btnSaveResult = new RollOverButton();
+    RollOverButton btnClearTextResult = new RollOverButton();
     JCheckBox chkShowReplaceParam = new JCheckBox("変数置換");
     RollOverButton btnReplaceParam = new RollOverButton();
 
@@ -136,22 +151,30 @@ public class PanelSQLScript extends JSplitPane {
         panelSQLLeft.setLayout(new BorderLayout());
         panelSQLRight.setLayout(new BorderLayout());
         panelSQLScriptInput.setLayout(borderLayoutInput);
-        panelSQLResult.setLayout(borderLayoutResult);
+        panelSQLTableResult.setLayout(borderLayoutResult);
+        panelSQLTextResult.setLayout(new BorderLayout());
         panelSplitInput.setOrientation(JSplitPane.HORIZONTAL_SPLIT);
-        btnExecuteSQL.setToolTipText("execute the current sql script  SHIFT-F9");
+        btnExecuteSQL.setToolTipText("単一SQL文実行。 Ctrl+Enter");
         btnExecuteSQL.setIcon(iconSQLExecute);
         btnExecuteSQL.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 executeSQLPerformed();
             }
         });
+        btnExecuteSQLMulti.setToolTipText("<html>複数スクリプト連続実行。F5 <br/>※「カンマ + 改行」で区切り");
+        btnExecuteSQLMulti.setIcon(iconSQLExecuteMulti);
+        btnExecuteSQLMulti.addActionListener(new java.awt.event.ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                executeSQLMultiPerformed();
+            }
+        });
         btnUndo.setIcon(iconUndo);
-        btnUndo.setToolTipText("undo last change  CTRL-Z");
+        btnUndo.setToolTipText("元に戻す Ctrl+Z");
         btnUndo.setEnabled(false);
         btnRedo.setEnabled(false);
-        btnRedo.setToolTipText("redo last undo  CTRL-Y");
+        btnRedo.setToolTipText("やり直し Ctrl+Y");
         btnRedo.setIcon(iconRedo);
-        btnCommit.setToolTipText("commit  CTRL-F9");
+        btnCommit.setToolTipText("コミット Ctrl+F9");
         btnCommit.setIcon(iconCommit);
         btnCommit.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -164,8 +187,8 @@ public class PanelSQLScript extends JSplitPane {
             }
         });
         btnToUpper.setIcon(iconToUpper);
-        btnToUpper.setToolTipText("To Upper Case ALT-F5");
-        btnToLower.setToolTipText("To Lower Case Shift-F5");
+        btnToUpper.setToolTipText("大文字 Alt+F6");
+        btnToLower.setToolTipText("小文字 Alt+F7");
         btnToLower.setIcon(iconToLower);
         btnToLower.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
@@ -173,7 +196,7 @@ public class PanelSQLScript extends JSplitPane {
             }
         });
         btnSQLBuilder.setIcon(iconSQLBuilder);
-        btnSQLBuilder.setToolTipText("SQL Format");
+        btnSQLBuilder.setToolTipText("SQL整形");
         btnSQLBuilder.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
                 sqlBuilderPerformed();
@@ -250,11 +273,12 @@ public class PanelSQLScript extends JSplitPane {
         });
         scpSQLScriptInput.setRowHeaderView(rowHeaderLabel);
         btnSaveResult.setIcon(iconResultSave);
-        toolBarResult.setFloatable(false);
-        toolBarResult.add(btnSaveResult);
+        btnSaveResult.setToolTipText("問い合わせ結果保存");
+        toolBarTableResult.setFloatable(false);
+        toolBarTableResult.add(btnSaveResult);
         btnSaveResult.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                TableModel model = tblScriptResult.getModel();
+                TableModel model = tblTableResult.getModel();
                 if (model instanceof DBTableModel) {
                     DBTableModel dbModel = (DBTableModel) model;
                     DialogSaveResultData dialogSaveResultData = new DialogSaveResultData();
@@ -263,25 +287,26 @@ public class PanelSQLScript extends JSplitPane {
                 }
             }
         });
-        panelSQLResult.add(toolBarResult, BorderLayout.NORTH);
-        panelSQLResult.add(scpResultTable, BorderLayout.CENTER);
-        scpResultTable.getViewport().add(tblScriptResult, null);
-        tblScriptResult.setDefaultRenderer(Object.class, dbTableCellRender);
-        tblScriptResult.getSelectionModel().addListSelectionListener(selectionRowListener);
-        tblScriptResult.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-        tblScriptResult.setColumnSelectionAllowed(true);
+        panelSQLTableResult.add(toolBarTableResult, BorderLayout.NORTH);
+        panelSQLTableResult.add(scpResultTable, BorderLayout.CENTER);
+        scpResultTable.getViewport().add(tblTableResult, null);
+        tblTableResult.setDefaultRenderer(Object.class, dbTableCellRender);
+        tblTableResult.getSelectionModel().addListSelectionListener(selectionRowListener);
+        tblTableResult.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        tblTableResult.setColumnSelectionAllowed(true);
         scpResultTable.setRowHeaderView(rowHeader);
         rowHeader.getSelectionModel().addListSelectionListener(selectionRowListener);
         btnLeftTopCorner.setIcon(iconEditOneRow);
         btnLeftTopCorner.setPreferredSize(new Dimension(20, 20));
         btnLeftTopCorner.addActionListener(new java.awt.event.ActionListener() {
             public void actionPerformed(ActionEvent e) {
-                int selectRow = tblScriptResult.getSelectedRow();
+                int selectRow = tblTableResult.getSelectedRow();
                 viewRowData(selectRow);
             }
         });
         scpResultTable.setCorner(ScrollPaneConstants.UPPER_LEFT_CORNER, btnLeftTopCorner);
         toolBarSQL.add(btnExecuteSQL, null);
+        toolBarSQL.add(btnExecuteSQLMulti, null);
         toolBarSQL.add(btnCommit, null);
         JToolBar.Separator separator1 = new JToolBar.Separator(new Dimension(2, 28));
         separator1.setBorder(BorderFactory.createEtchedBorder());
@@ -304,7 +329,24 @@ public class PanelSQLScript extends JSplitPane {
         toolBarSQL.add(separator4, null);
         toolBarSQL.add(chkShowReplaceParam, null);
         toolBarSQL.add(btnReplaceParam, null);
-        this.setBottomComponent(panelSQLResult);
+        
+        txtScriptResult.setEditable(false);
+        scpScriptResult.getViewport().add(txtScriptResult);
+        btnClearTextResult.setIcon(iconClearTextResult);
+        btnClearTextResult.setToolTipText("出力内容クリア");
+        btnClearTextResult.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                txtScriptResult.setText("");
+            }
+        });
+        toolBarTextResult.setFloatable(false);
+        toolBarTextResult.add(btnClearTextResult);
+        panelSQLTextResult.add(toolBarTextResult, BorderLayout.NORTH);
+        panelSQLTextResult.add(scpScriptResult, BorderLayout.CENTER);
+        
+        tbpResult.addTab("問い合わせ結果", iconSQLExecute, panelSQLTableResult);
+        tbpResult.addTab("スクリプト出力", iconSQLExecuteMulti, panelSQLTextResult);
+        this.setBottomComponent(tbpResult);
         this.setTopComponent(panelSQLScriptInput);
         this.setDividerLocation(250);
 
@@ -338,10 +380,12 @@ public class PanelSQLScript extends JSplitPane {
             txtPanelSQLScript.setEnabled(true);
             btnCommit.setEnabled(true);
             btnExecuteSQL.setEnabled(true);
+            btnExecuteSQLMulti.setEnabled(true);
         } else {
             txtPanelSQLScript.setEnabled(false);
             btnCommit.setEnabled(false);
             btnExecuteSQL.setEnabled(false);
+            btnExecuteSQLMulti.setEnabled(false);
         }
 
         txtPanelSQLScript.resetUndoManager();
@@ -386,12 +430,12 @@ public class PanelSQLScript extends JSplitPane {
         rowHeaderModel.resetTable();
         rowHeader.getColumnModel().getColumn(0).setCellRenderer(new PJDBDataTableRowHeaderRender());
 
-        DBTableModel dataModel = new DBTableModel(tblScriptResult, null, tempData, PJConst.TABLE_TYPE_READONLY);
-        tblScriptResult.setModel(dataModel);
+        DBTableModel dataModel = new DBTableModel(tblTableResult, null, tempData, PJConst.TABLE_TYPE_READONLY);
+        tblTableResult.setModel(dataModel);
 
-        tblScriptResult.getColumnModel().getColumn(0).setPreferredWidth(120);
+        tblTableResult.getColumnModel().getColumn(0).setPreferredWidth(120);
 
-        tblScriptResult.repaint();
+        tblTableResult.repaint();
     }
 
     void doReplaceParams() {
@@ -421,11 +465,90 @@ public class PanelSQLScript extends JSplitPane {
             sql = selectSql;
         } else {
             sql = txtPanelSQLScript.getText();
+            sql = sql.replaceAll("\r\n", "\n");
+            int caret = txtPanelSQLScript.getCaretPosition();
+            if (caret >= 0) {
+                int prevLine = sql.lastIndexOf("\n", caret - 1);
+                if (prevLine >= 0) {
+                    caret = prevLine + 1;
+                } else {
+                    caret = 0;
+                }
+                int endPos = sql.length();
+                Pattern pattern = Pattern.compile(";(\\s*)\n");
+                Matcher matcher = pattern.matcher(sql);
+                if (matcher.find(caret)) {
+                    endPos = matcher.start();
+                }
+
+                int startPos = sql.lastIndexOf(";", caret - 1);
+                while (startPos >= 0) {
+                    if (matcher.find(startPos)) {
+                        if (matcher.start() == startPos) {
+                            startPos = matcher.end();
+                            break;
+                        } else {
+                            startPos = sql.lastIndexOf(";", startPos - 1);
+                        }
+                    }
+                }
+                if (startPos < 0) {
+                    startPos = 0;
+                }
+
+                sql = sql.substring(startPos, endPos);
+            }
         }
 
+        tbpResult.setSelectedComponent(panelSQLTableResult);
         processResultShow(sql);
         lastSQL = sql;
         txtPanelSQLScript.requestFocus();
+    }
+    
+    void executeSQLMultiPerformed() {
+        String sql;
+        String selectSql = txtPanelSQLScript.getSelectedText();
+        int orgSelectStart = 0;
+        int orgSelectEnd = 0;
+        if (selectSql != null && !selectSql.trim().equals("")) {
+            sql = selectSql;
+            orgSelectStart = txtPanelSQLScript.getSelectionStart();
+            orgSelectEnd = txtPanelSQLScript.getSelectionEnd();
+        } else {
+            sql = txtPanelSQLScript.getText();
+        }
+        
+        tbpResult.setSelectedComponent(panelSQLTextResult);
+
+        String[] sqlArr = sql.split(";(\\s*)(\r?)\n");
+        ThreadDoExecute t = new ThreadDoExecute(sqlArr);
+        t.start();
+
+        txtPanelSQLScript.requestFocus();
+        txtPanelSQLScript.setSelectionStart(orgSelectStart);
+        txtPanelSQLScript.setSelectionEnd(orgSelectEnd);
+    }
+
+    class ThreadDoExecute extends Thread {
+        String[] sqlArr = null;
+        public ThreadDoExecute(String[] sqlArr) {
+            this.sqlArr = sqlArr;
+        }
+
+        /**
+         * start method
+         */
+        public void run() {
+            if (sqlArr == null || sqlArr.length == 0) return;
+            for (String oneSql : sqlArr) {
+                if (oneSql == null || oneSql.trim().equals("")) {
+                    continue;
+                }
+                processScriptResultShow(oneSql);
+                appendResultText("");
+            }
+        }
     }
 
     /**
@@ -482,7 +605,7 @@ public class PanelSQLScript extends JSplitPane {
             return;
         }
 
-        TableModel model = tblScriptResult.getModel();
+        TableModel model = tblTableResult.getModel();
         if (model instanceof DBTableModel) {
             DBTableModel dbModel = (DBTableModel) model;
             Vector columnName = dbModel.getRealColumnName();
@@ -524,8 +647,8 @@ public class PanelSQLScript extends JSplitPane {
             Object source = e.getSource();
 
             if (!e.getValueIsAdjusting()) {
-                if (source == tblScriptResult.getSelectionModel()) {
-                    int selectedRow = tblScriptResult.getSelectedRow();
+                if (source == tblTableResult.getSelectionModel()) {
+                    int selectedRow = tblTableResult.getSelectedRow();
                     if (rowHeader.getSelectedRow() != selectedRow && selectedRow >= 0) {
                         rowHeader.changeSelection(selectedRow, 0, false, false);
                     }
@@ -537,11 +660,11 @@ public class PanelSQLScript extends JSplitPane {
                     int selectedRow = rowHeader.getSelectedRow();
 
                     if (selectedRow >= 0) {
-                        if (tblScriptResult.getSelectedRow() != selectedRow) {
-                            tblScriptResult.changeSelection(selectedRow, 0, false, false);
+                        if (tblTableResult.getSelectedRow() != selectedRow) {
+                            tblTableResult.changeSelection(selectedRow, 0, false, false);
                         }
                     } else {
-                        tblScriptResult.clearSelection();
+                        tblTableResult.clearSelection();
                     }
                 }
             }
@@ -562,6 +685,61 @@ public class PanelSQLScript extends JSplitPane {
         }
     }
 
+    void processScriptResultShow(String sql) {
+        if (sql == null || sql.trim().equals("")) {
+            return;
+        }
+
+        try {
+            long beginTime = System.currentTimeMillis();
+            Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, false, null);
+            long endTime = System.currentTimeMillis();
+            long executeTime = endTime - beginTime;
+
+            if (value instanceof Vector) {
+                Vector data = (Vector) value;
+                if (data != null && data.size() > 5) {
+                    String header = StringUtil.joinList((Vector) data.get(0), '\t');
+                    appendResultText(header);
+                    for (int i = 5; i < data.size(); i++) {
+                        appendResultText(StringUtil.joinList((Vector) data.get(i), '\t'));
+                    }
+                    appendResultText(StringUtil.getPadString("----------", '-', header.length()));
+                    appendResultText((data.size() - 5) + "件検索しました。");
+                } else {
+                    appendResultText("検索結果は0件です。");
+                }
+            } else if (value instanceof Integer) {
+                int affectRows = ((Integer) value).intValue();
+                String action = "";
+                String upperSql = sql.trim().toUpperCase();
+                if (upperSql.startsWith("UPDATE")) {
+                    action = "更新";
+                } else if (upperSql.startsWith("INSERT")) {
+                    action = "挿入";
+                } else if (upperSql.startsWith("DELETE")) {
+                    action = "削除";
+                }
+                appendResultText(affectRows + "件" + action + "しました。");
+            }
+        } catch (SQLException se) {
+            appendResultText(se.getMessage());
+            return;
+        }
+    }
+
+    void appendResultText(final String txt) {
+        try {
+            SwingUtilities.invokeAndWait(new Runnable() {
+                public void run() {
+                    txtScriptResult.setText(txtScriptResult.getText() + "\n" + txt);
+                }
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
     /**
      * process query result show
      */
@@ -578,8 +756,8 @@ public class PanelSQLScript extends JSplitPane {
 
             if (value instanceof Vector) {
                 Vector data = (Vector) value;
-                DBTableModel dataModel = new DBTableModel(tblScriptResult, null, data, PJConst.TABLE_TYPE_READONLY);
-                tblScriptResult.setModel(dataModel);
+                DBTableModel dataModel = new DBTableModel(tblTableResult, null, data, PJConst.TABLE_TYPE_READONLY);
+                tblTableResult.setModel(dataModel);
 
                 PJTableRowHeaderModel rowHeaderModel = new PJTableRowHeaderModel(rowHeader, data);
                 rowHeader.setModel(rowHeaderModel);
@@ -613,8 +791,11 @@ public class PanelSQLScript extends JSplitPane {
                 executeSQLPerformed();
             } else if (keyCode == KeyEvent.VK_F9 && e.isControlDown()) {
                 commitPerformed();
+            } else if (keyCode == KeyEvent.VK_F5) {
+                executeSQLMultiPerformed();
+            } else if (keyCode == KeyEvent.VK_ENTER && e.isControlDown()) {
+                executeSQLPerformed();
             }
         }
     }
 }
-

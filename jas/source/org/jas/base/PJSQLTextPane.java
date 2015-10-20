@@ -138,9 +138,9 @@ public class PJSQLTextPane extends JTextPane {
 				processUndo();
 			} else if (keyCode == KeyEvent.VK_Y && e.isControlDown()) {
 				processRedo();
-			} else if (keyCode == KeyEvent.VK_F5 && e.isAltDown()) {
+			} else if (keyCode == KeyEvent.VK_F6 && e.isAltDown()) {
 				toUpperCase();
-			} else if (keyCode == KeyEvent.VK_F5 && e.isShiftDown()) {
+			} else if (keyCode == KeyEvent.VK_F7 && e.isAltDown()) {
 				toLowerCase();
 			}
 		}

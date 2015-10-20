@@ -767,11 +767,12 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
                 panelReport.refreshDisplay();
                 existsPanel.panelReport = panelReport;
 
-                PanelDataHistory panelHistory = new PanelDataHistory();
-                panelHistory.setSize(800, this.getHeight() - 40);
-                panelHistory.setParam(PJConst.BEAN_TYPE_REPORT, selectedValue);
-                panelHistory.refreshDisplay();
-                existsPanel.panelHistory = panelHistory;
+                //TODO
+//                PanelDataHistory panelHistory = new PanelDataHistory();
+//                panelHistory.setSize(800, this.getHeight() - 40);
+//                panelHistory.setParam(PJConst.BEAN_TYPE_REPORT, selectedValue);
+//                panelHistory.refreshDisplay();
+//                existsPanel.panelHistory = panelHistory;
 
                 parent.saveRightBeanPanel(PJConst.BEAN_TYPE_REPORT, selectedValue, existsPanel);
             }

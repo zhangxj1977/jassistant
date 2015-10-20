@@ -32,6 +32,9 @@ public class DBUtil {
 			if (password != null) {
 				props.setProperty("password", password);
 			}
+			if ("com.ibm.db2.jcc.DB2Driver".equals(driverName)) {
+			    props.setProperty("retrieveMessagesFromServerOnGetMessage", "true");
+			}
 			conn = driver.connect(connectionURL, props);
 
 			return conn;

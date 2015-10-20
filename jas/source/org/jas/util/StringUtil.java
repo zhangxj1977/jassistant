@@ -76,6 +76,22 @@ public class StringUtil {
 		return sb.toString();
 	}
 
+    /**
+     * return the string left is pad char
+     *
+     */
+    public static String getPadString(String str, char pad, int len) {
+        if (str == null) str = "";
+        if (str.length() >= len) return str;
+        StringBuffer sb = new StringBuffer("");
+        for (int i = 0; i < len - str.length(); i++) {
+            sb.append(String.valueOf(pad));
+        }
+        sb.append(str);
+
+        return sb.toString();
+    }
+
 	/**
 	 * test the given encode is validy
 	 *
@@ -450,7 +466,13 @@ public class StringUtil {
 		StringBuffer sb = new StringBuffer();
 
 		for (int i = 0; i < rowVector.size(); i++) {
-			sb.append(nvl((String) rowVector.get(i)));
+		    if (rowVector.get(i) == null) {
+		        sb.append("");
+		    } else if (rowVector.get(i) instanceof Vector) {
+		        continue;
+		    } else {
+		        sb.append(rowVector.get(i).toString());
+		    }
 			if (i < rowVector.size() - 1) {
 				sb.append(sep);
 			}

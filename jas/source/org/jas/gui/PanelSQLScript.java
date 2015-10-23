@@ -2,6 +2,7 @@ package org.jas.gui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.FontMetrics;
@@ -461,11 +462,19 @@ public class PanelSQLScript extends JSplitPane {
     void executeSQLPerformed() {
         String sql;
         String selectSql = txtPanelSQLScript.getSelectedText();
+        int orgSelectStart = -1;
+        int orgSelectEnd = -1;
+        int orgCaret = txtPanelSQLScript.getCaretPosition();
         if (selectSql != null && !selectSql.trim().equals("")) {
             sql = selectSql;
+            orgSelectStart = txtPanelSQLScript.getSelectionStart();
+            orgSelectEnd = txtPanelSQLScript.getSelectionEnd();
         } else {
             sql = txtPanelSQLScript.getText();
             sql = sql.replaceAll("\r\n", "\n");
+            if (sql.trim().equals("")) {
+                return;
+            }
             int caret = txtPanelSQLScript.getCaretPosition();
             if (caret >= 0) {
                 int prevLine = sql.lastIndexOf("\n", caret - 1);
@@ -497,20 +506,65 @@ public class PanelSQLScript extends JSplitPane {
                 }
 
                 sql = sql.substring(startPos, endPos);
+                txtPanelSQLScript.setSelectionStart(startPos);
+                txtPanelSQLScript.setSelectionEnd(endPos);
             }
         }
 
+        txtPanelSQLScript.setCursor(new Cursor(Cursor.WAIT_CURSOR));
         tbpResult.setSelectedComponent(panelSQLTableResult);
-        processResultShow(sql);
-        lastSQL = sql;
-        txtPanelSQLScript.requestFocus();
+
+        ThreadDoSQLExecute t = new ThreadDoSQLExecute(
+                sql, orgSelectStart, orgSelectEnd, orgCaret);
+        t.start();
     }
-    
+
+    class ThreadDoSQLExecute extends Thread {
+        String sql = null;
+        int orgSelectStart = -1;
+        int orgSelectEnd = -1;
+        int orgCaret = -1;
+        public ThreadDoSQLExecute(String sql,
+                int orgSelectStart, int orgSelectEnd, int orgCaret) {
+            this.sql = sql;
+            this.orgSelectStart = orgSelectStart;
+            this.orgSelectEnd = orgSelectEnd;
+            this.orgCaret = orgCaret;
+        }
+        public void run() {
+            try {
+                final Object obj = processExecuteSql(sql);
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        processResultShow(obj);
+                    }
+                });
+                lastSQL = sql;
+            } finally {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        if (orgSelectEnd > 0) {
+                            txtPanelSQLScript.setSelectionStart(orgSelectStart);
+                            txtPanelSQLScript.setSelectionEnd(orgSelectEnd);
+                        } else {
+                            if (orgCaret > -1) {
+                                txtPanelSQLScript.select(orgCaret, orgCaret);
+                            }
+                        }
+                        txtPanelSQLScript.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+                        txtPanelSQLScript.requestFocus();
+                    }
+                });
+            }
+        }
+    }
+
     void executeSQLMultiPerformed() {
         String sql;
         String selectSql = txtPanelSQLScript.getSelectedText();
-        int orgSelectStart = 0;
-        int orgSelectEnd = 0;
+        int orgSelectStart = -1;
+        int orgSelectEnd = -1;
+        int orgCaret = txtPanelSQLScript.getCaretPosition();
         if (selectSql != null && !selectSql.trim().equals("")) {
             sql = selectSql;
             orgSelectStart = txtPanelSQLScript.getSelectionStart();
@@ -518,35 +572,58 @@ public class PanelSQLScript extends JSplitPane {
         } else {
             sql = txtPanelSQLScript.getText();
         }
-        
+
+        txtPanelSQLScript.setCursor(new Cursor(Cursor.WAIT_CURSOR));
+
         tbpResult.setSelectedComponent(panelSQLTextResult);
 
         String[] sqlArr = sql.split(";(\\s*)(\r?)\n");
-        ThreadDoExecute t = new ThreadDoExecute(sqlArr);
+        ThreadDoMultiSqlExecute t = new ThreadDoMultiSqlExecute(
+                sqlArr, orgSelectStart, orgSelectEnd, orgCaret);
         t.start();
-
-        txtPanelSQLScript.requestFocus();
-        txtPanelSQLScript.setSelectionStart(orgSelectStart);
-        txtPanelSQLScript.setSelectionEnd(orgSelectEnd);
     }
 
-    class ThreadDoExecute extends Thread {
+    class ThreadDoMultiSqlExecute extends Thread {
         String[] sqlArr = null;
-        public ThreadDoExecute(String[] sqlArr) {
+        int orgSelectStart = -1;
+        int orgSelectEnd = -1;
+        int orgCaret = -1;
+        public ThreadDoMultiSqlExecute(String[] sqlArr,
+                int orgSelectStart, int orgSelectEnd, int orgCaret) {
             this.sqlArr = sqlArr;
+            this.orgSelectStart = orgSelectStart;
+            this.orgSelectEnd = orgSelectEnd;
+            this.orgCaret = orgCaret;
         }
 
         /**
          * start method
          */
         public void run() {
-            if (sqlArr == null || sqlArr.length == 0) return;
-            for (String oneSql : sqlArr) {
-                if (oneSql == null || oneSql.trim().equals("")) {
-                    continue;
+            try {
+                if (sqlArr == null || sqlArr.length == 0) return;
+                for (String oneSql : sqlArr) {
+                    if (oneSql == null || oneSql.trim().equals("")) {
+                        continue;
+                    }
+                    processScriptResultShow(oneSql);
+                    appendResultText("");
                 }
-                processScriptResultShow(oneSql);
-                appendResultText("");
+            } finally {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        if (orgSelectEnd > 0) {
+                            txtPanelSQLScript.setSelectionStart(orgSelectStart);
+                            txtPanelSQLScript.setSelectionEnd(orgSelectEnd);
+                        } else {
+                            if (orgCaret > -1) {
+                                txtPanelSQLScript.select(orgCaret, orgCaret);
+                            }
+                        }
+                        txtPanelSQLScript.setCursor(new Cursor(Cursor.TEXT_CURSOR));
+                        txtPanelSQLScript.requestFocus();
+                    }
+                });
             }
         }
     }
@@ -741,19 +818,36 @@ public class PanelSQLScript extends JSplitPane {
     }
 
     /**
-     * process query result show
+     * process query result
      */
-    void processResultShow(String sql) {
+    Object processExecuteSql(String sql) {
         if (sql == null || sql.trim().equals("")) {
-            return;
+            return null;
         }
 
         try {
             long beginTime = System.currentTimeMillis();
             Object value = DBParser.getResultByScript(Main.getMDIMain().getConnection(), sql, false, null);
             long endTime = System.currentTimeMillis();
-            long executeTime = endTime - beginTime;
+            executeTime = endTime - beginTime;
 
+            return value;
+        } catch (Exception se) {
+            return se;
+        }
+    }
+
+    long executeTime = -1;
+
+    /**
+     * process query result show
+     */
+    void processResultShow(Object value) {
+        if (value == null) {
+            return;
+        }
+
+        try {
             if (value instanceof Vector) {
                 Vector data = (Vector) value;
                 DBTableModel dataModel = new DBTableModel(tblTableResult, null, data, PJConst.TABLE_TYPE_READONLY);
@@ -772,10 +866,12 @@ public class PanelSQLScript extends JSplitPane {
                 int affectRows = ((Integer) value).intValue();
                 Main.getMDIMain().setStatusText(affectRows + " rows updated or inserted: " + executeTime + " ms");
                 setEmptyTableModel();
+            } else if (value instanceof SQLException) {
+                MessageManager.showMessage("MCSTC202E", ((SQLException) value).getMessage());
+            } else if (value instanceof Exception) {
+                MessageManager.showMessage("MCSTC203E", ((Exception) value).getMessage());
             }
-        } catch (SQLException se) {
-            MessageManager.showMessage("MCSTC202E", se.getMessage());
-            return;
+        } finally {
         }
     }
 

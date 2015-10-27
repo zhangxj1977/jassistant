@@ -290,7 +290,10 @@ public class DialogOpenConnection extends PJDialogBase implements ParamTransferL
 
 		String connURL = StringUtil.nvl(userName) + "/" + StringUtil.nvl(password) + "@" + connectionName;
 		processAddConnections(connURL);
-		fireParamTransferEvent(new Object[]{connURL, conn, userName + "@" + connectionName}, PJConst.WINDOW_OPENCONNECTION);
+		fireParamTransferEvent(new Object[]{
+		        connURL, conn,
+		        userName + "@" + connectionName,
+		        connectionName}, PJConst.WINDOW_OPENCONNECTION);
 		dispose();
 	}
 

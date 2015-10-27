@@ -1,13 +1,13 @@
 package org.jas.gui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.Insets;
 import java.awt.Point;
 import java.awt.SystemColor;
 import java.awt.Toolkit;
-import java.awt.datatransfer.Clipboard;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
@@ -16,7 +16,11 @@ import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.FilenameFilter;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -52,10 +56,13 @@ import org.jas.common.PJConst;
 import org.jas.common.ParamTransferEvent;
 import org.jas.common.ParamTransferListener;
 import org.jas.db.DBParser;
+import org.jas.model.MyDBConnConfig;
 import org.jas.model.TableDefineData;
 import org.jas.util.ImageManager;
 import org.jas.util.MessageManager;
 import org.jas.util.ResourceManager;
+
+import com.thoughtworks.xstream.XStream;
 
 /**
  *
@@ -69,9 +76,15 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
     ImageIcon iconTableFilterSort = ImageManager.createImageIcon("filtersort.gif");
     ImageIcon iconCopy = ImageManager.createImageIcon("copy.gif");
     ImageIcon iconDeleteAllTableData = ImageManager.createImageIcon("deletealltabledata.gif");
+    ImageIcon iconAddFavor = ImageManager.createImageIcon("addfavor.gif");
+    ImageIcon iconDelFavor = ImageManager.createImageIcon("delfavor.gif");
+    ImageIcon iconClearFavor = ImageManager.createImageIcon("clearfavor.gif");
     JPopupMenu tableNamesPopupMenu = new JPopupMenu();
     JMenuItem mnuItemCopyTableName = new JMenuItem("テーブル名コピー");
     JMenuItem mnuItemDeletaTableData = new JMenuItem("clear table data");
+    JMenuItem mnuItemAddFavorTableName = new JMenuItem("お気に入りに追加");
+    JMenuItem mnuItemDeleteFavorTableName = new JMenuItem("お気に入りから削除");
+    JMenuItem mnuItemClearFavorTableName = new JMenuItem("お気に入りをすべて削除");
     ButtonMenuActionListener buttonMenuActionListener = new ButtonMenuActionListener();
     ShowPopupMouseListener showPopupMouseListener = new ShowPopupMouseListener();
     BorderLayout leftPanelBorderLayout = new BorderLayout();
@@ -277,6 +290,9 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
         tableNamesPopupMenu.add(mnuItemCopyTableName);
         //tableNamesPopupMenu.add(mnuItemDeletaTableData);
+        tableNamesPopupMenu.add(mnuItemAddFavorTableName);
+        tableNamesPopupMenu.add(mnuItemDeleteFavorTableName);
+        tableNamesPopupMenu.add(mnuItemClearFavorTableName);
 
         reportPopupMenu.add(mnuItemCopyReportName);
         mnuItemCopyReportName.setIcon(iconCopy);
@@ -303,6 +319,18 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         mnuItemDeletaTableData.setToolTipText("Delete all the table data with filter");
         mnuItemDeletaTableData.addActionListener(buttonMenuActionListener);
 
+        mnuItemAddFavorTableName.setIcon(iconAddFavor);
+        mnuItemDeleteFavorTableName.setIcon(iconDelFavor);
+        mnuItemClearFavorTableName.setIcon(iconClearFavor);
+
+        mnuItemAddFavorTableName.setToolTipText("お気に入りに追加し、先頭に表示されます。");
+        mnuItemDeleteFavorTableName.setToolTipText("お気に入りから削除し、元の位置に表示されます。");
+        mnuItemClearFavorTableName.setToolTipText("お気に入りすべて項目を削除します。");
+
+        mnuItemAddFavorTableName.addActionListener(buttonMenuActionListener);
+        mnuItemDeleteFavorTableName.addActionListener(buttonMenuActionListener);
+        mnuItemClearFavorTableName.addActionListener(buttonMenuActionListener);
+
         listTableNames.addMouseListener(showPopupMouseListener);
         lstReportList.addMouseListener(showPopupMouseListener);
 
@@ -317,6 +345,11 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
     PJTableListModel viewListModel = new PJTableListModel();
     PJTableListModel newBeanListModel = new PJTableListModel();
     PJTableListModel reportListModel = new PJTableListModel();
+
+    // 元テーブルリスト
+    ArrayList<TableDefineData> tableList = new ArrayList<TableDefineData>();
+    // お気に入りリスト
+    ArrayList<String> favaorTblList = new ArrayList<String>();
 
     String[] tabbedPaneTitles = {"テーブル", "ビュー", "Bean", "レポート"};
 
@@ -341,6 +374,10 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         }
 
         cmbConnectionURL.addItemListener(changeConnectionListener);
+    }
+
+    private void initConfig() {
+        restoreConfig();
     }
 
     /**
@@ -385,8 +422,8 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
      * if the conn is null then clear the lists
      */
     public void refreshTableList(Connection conn) throws SQLException {
+        initConfig();
         initCmbConnectionURL();
-        ArrayList tableList = null;
         if (conn == null) {
             tableListModel.setDataSet(null);
             viewListModel.setDataSet(null);
@@ -534,11 +571,109 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         lblReportCounts.setText(String.valueOf(reportListModel.getSize()) + " " + tabbedPaneTitles[3]);
     }
 
+    private void addFavorTable(String name) {
+        String rawName = getNoCommentStr(name);
+        if (!favaorTblList.contains(rawName)) {
+            favaorTblList.add(rawName);
+        }
+        setListsValue(tableList);
+        listTableNames.setSelectedValue(name, true);
+        saveConfig();
+    }
+
+    private void delFavorTable(String name) {
+        name = getNoCommentStr(name);
+        favaorTblList.remove(name);
+        setListsValue(tableList);
+        saveConfig();
+    }
+
+    private void clearFavorTable() {
+        favaorTblList.clear();
+        setListsValue(tableList);
+        saveConfig();
+    }
+
+
+    static File configDir = new File(Main.configPath, "conn");
+
+    static {
+        if (!configDir.exists()) {
+            configDir.mkdirs();
+        }
+    }
+
+    private void saveConfig() {
+        (new ThreadDoSave()).start();
+    }
+    
+    class ThreadDoSave extends Thread {
+        public void run() {
+            MyDBConnConfig myConfig = new MyDBConnConfig();
+            myConfig.setFavorTableList(favaorTblList);
+
+            String connName = Main.getMDIMain().currentConnName;
+
+            File conFile = new File(configDir, connName + ".xml");
+            OutputStreamWriter fos = null;
+            try {
+                fos = new OutputStreamWriter(new FileOutputStream(conFile),  "UTF-8");
+                XStream xs = new XStream();
+                xs.toXML(myConfig, fos);
+            } catch (final Exception e) {
+                e.printStackTrace();
+                try {
+                    SwingUtilities.invokeAndWait(new Runnable() {                   
+                        public void run() {
+                            MessageManager.showMessage("MCSTC203E", e.getMessage());
+                        }
+                    });
+                } catch (Exception ee) {
+                    ee.printStackTrace();
+                }
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (Exception e) {}
+                }
+            }
+        }       
+    }
+
+    private void restoreConfig() {
+        favaorTblList.clear();
+        MyDBConnConfig myConfig = null;
+        String connName = Main.getMDIMain().currentConnName;
+        File conFile = new File(configDir, connName + ".xml");
+        if (conFile.exists()) {
+            InputStreamReader isr = null;
+            try {
+                isr = new InputStreamReader(new FileInputStream(conFile), "UTF-8");
+                XStream xs = new XStream();
+                myConfig = (MyDBConnConfig) xs.fromXML(isr);
+            } catch (Exception e) {
+                MessageManager.showMessage("MCSTC203E", e.getMessage());
+                e.printStackTrace();
+            } finally {
+                if (isr != null) {
+                    try {
+                        isr.close();
+                    } catch (Exception e) {}
+                }
+            }
+            if (myConfig != null) {
+                favaorTblList = myConfig.getFavorTableList();
+            }
+        }
+    }
+
     /**
      * parse name to lists
      */
     private void setListsValue(ArrayList tableList) {
         ArrayList tableNameList = new ArrayList();
+        ArrayList tableNameListFavaor = new ArrayList();
         ArrayList viewNameList = new ArrayList();
 
         for (int i=0; i<tableList.size(); i++) {
@@ -546,21 +681,27 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
             if (tableData != null) {
                 if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[0])) {
+                    String showTableName = tableData.getTableName();
                     if (tableData.getComment() != null && !"".equals(tableData.getComment())) {
-                        tableNameList.add(tableData.getTableName() + "(" + tableData.getComment() + ")");
+                        showTableName = tableData.getTableName() + "(" + tableData.getComment() + ")";  
+                    }
+                    if (favaorTblList.contains(tableData.getTableName())) {
+                        tableNameListFavaor.add(showTableName);
                     } else {
-                        tableNameList.add(tableData.getTableName());
+                        tableNameList.add(showTableName);
                     }
                 } else if (tableData.getTableType().equalsIgnoreCase(PJConst.TABLE_TYPES[1])) {
                     viewNameList.add(tableData.getTableName());
                 }
             }
         }
+        tableNameList.addAll(0, tableNameListFavaor);
 
         tableListModel.setDataSet(tableNameList, null);
         viewListModel.setDataSet(viewNameList);
 
-        setFilterTables(null);
+        listTableNames.clearSelection();
+        listTableNames.repaint();
     }
 
     /**
@@ -629,9 +770,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         String fullName = selectedValue;
 
         if (selectedValue != null) {
-            if (selectedValue.indexOf("(") > 0) {
-                selectedValue = selectedValue.substring(0, selectedValue.indexOf("("));
-            }
+            selectedValue = getNoCommentStr(selectedValue);
             PanelRight existsPanel = parent.getSelectedRightPanel();
 
             if (existsPanel == null || !selectedValue.equals(existsPanel.getTableName())) {
@@ -833,10 +972,19 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
             } else if (item == mnuItemCopyReportName) {
                 String selectedValue = (String) lstReportList.getSelectedValue();
                 copyReport(selectedValue);
+            } else if (item == mnuItemAddFavorTableName) {
+                String selectedValue = (String) listTableNames.getSelectedValue();
+                addFavorTable(selectedValue);
+            } else if (item == mnuItemDeleteFavorTableName) {
+                String selectedValue = (String) listTableNames.getSelectedValue();
+                delFavorTable(selectedValue);
+            } else if (item == mnuItemClearFavorTableName) {
+                clearFavorTable();
             }
         }
     }
 
+    
     /**
      * table list mouse click event
      * show popupmenu
@@ -928,6 +1076,17 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
             if (obj == listTableNames) {
                 tableNamesPopupMenu.show((JComponent) obj, showX, showY);
+                
+                mnuItemAddFavorTableName.setEnabled(false);
+                mnuItemDeleteFavorTableName.setEnabled(false);
+
+                String selectedValue = (String) listTableNames.getSelectedValue();
+                String name = getNoCommentStr(selectedValue);
+                if (!favaorTblList.contains(name)) {
+                    mnuItemAddFavorTableName.setEnabled(true);
+                } else {
+                    mnuItemDeleteFavorTableName.setEnabled(true);
+                }
             } else if (obj == lstReportList) {
                 reportPopupMenu.show((JComponent) obj, showX, showY);
             }
@@ -967,13 +1126,7 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
 
         if (selectedValue != null) {
             int keyCode = e.getKeyCode();
-            if (keyCode == KeyEvent.VK_DELETE) {
-                /*
-                if (MessageManager.showMessage("MCSTC007Q") == 0) {
-                    deleteSelectedNewBean(PJConst.BEAN_TYPE_TABLE, selectedValue);
-                }
-                */
-            } else if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
+            if (keyCode == KeyEvent.VK_C && e.isControlDown()) {
                 copy(selectedValue);
             }
         }
@@ -1058,23 +1211,40 @@ public class PanelTableList extends JPanel implements ParamTransferListener {
         public Component getListCellRendererComponent(JList list, Object value,
                 int index, boolean isSelected, boolean cellHasFocus) {
 
+            String noCommentStr = getNoCommentStr((String) value);
             if (!isShowComment) {
-                if (value != null) {
-                    String str = (String) value;
-                    int pos = str.indexOf("(");
-                    if (pos > 0) {
-                        str = str.substring(0, pos);
-                        value = str;
-                    }
+                value = noCommentStr;
+            }
+
+            Component comp = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (favaorTblList.contains(noCommentStr)) {
+                if (isSelected) {
+                    comp.setBackground(list.getSelectionBackground());
+                    comp.setForeground(list.getSelectionForeground());
+                } else {
+                    comp.setBackground(list.getBackground());
+                    comp.setForeground(Color.red);
                 }
             }
 
-            return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            return comp;
         }
     }
 
+    private String getNoCommentStr(String content) {
+        if (content != null) {
+            int pos = content.indexOf("(");
+            if (pos > 0) {
+                content = content.substring(0, pos);
+            }
+        }
+        return content;
+    }
+
     private synchronized void copy(String content) {
-        Clipboard clipboard = Toolkit.getDefaultToolkit().getSystemClipboard();
+        if (!isShowComment) {
+            content = getNoCommentStr(content);
+        }
 
         JTextArea tempArea = new JTextArea(content);
         tempArea.selectAll();

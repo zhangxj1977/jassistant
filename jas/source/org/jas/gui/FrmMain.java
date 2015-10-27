@@ -138,6 +138,7 @@ public class FrmMain extends JFrame implements ParamTransferListener {
 	Connection conn = null;
 	String currentConnURL = null;
 	String extTitile = "";
+	String currentConnName = null;
 
 	/*************************************************************************************
 	/* éñåèèàóùópÉGÉäÉA
@@ -520,8 +521,10 @@ public class FrmMain extends JFrame implements ParamTransferListener {
 				this.currentConnURL = (String) obj[0];
 				Connection curConn = (Connection) obj[1];
 				this.extTitile = (String) obj[2];
-				setConnection(curConn);
-				
+                currentConnName = (String) obj[3];
+
+                setConnection(curConn);
+
 				if (this.extTitile != null) {
 				    setTitle("JDBDevelop Assistant (" + extTitile + ")");
 				}
@@ -561,6 +564,7 @@ public class FrmMain extends JFrame implements ParamTransferListener {
 		}
 		conn = null;
 		currentConnURL = null;
+		currentConnName = null;
 
 		setConnectionStatus();
 

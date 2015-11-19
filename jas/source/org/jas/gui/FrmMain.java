@@ -260,9 +260,13 @@ public class FrmMain extends JFrame implements ParamTransferListener {
 			desktop.add(jiSQLScript, BorderLayout.CENTER);
 
 			if (!jiSQLScript.isMaximum()) {
-				try {
-					jiSQLScript.setMaximum(true);
-				} catch (java.beans.PropertyVetoException pve) {}
+			    SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        try {
+                            jiSQLScript.setMaximum(true);
+                        } catch (java.beans.PropertyVetoException pve) {}
+                    }
+                });
 			}
 			sqlScriptPanel.resetSplitLayout();
 		}
@@ -295,9 +299,13 @@ public class FrmMain extends JFrame implements ParamTransferListener {
 			desktop.add(jiSQLBrowser, BorderLayout.CENTER);
 
 			if (!jiSQLBrowser.isMaximum()) {
-				try {
-					jiSQLBrowser.setMaximum(true);
-				} catch (java.beans.PropertyVetoException pve) {}
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        try {
+                            jiSQLBrowser.setMaximum(true);
+                        } catch (java.beans.PropertyVetoException pve) {}
+                    }
+                });
 			}
 		}
 		try {

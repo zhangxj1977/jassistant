@@ -10,18 +10,20 @@ import java.awt.SystemColor;
 import java.awt.Toolkit;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.CellEditor;
+import javax.swing.DefaultComboBoxModel;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -29,6 +31,7 @@ import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JMenuItem;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JScrollPane;
@@ -41,12 +44,9 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.SwingUtilities;
 import javax.swing.border.BevelBorder;
 import javax.swing.border.Border;
-import javax.swing.border.LineBorder;
 import javax.swing.event.CellEditorListener;
 import javax.swing.event.ChangeEvent;
 import javax.swing.event.ChangeListener;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.table.TableColumnModel;
 import javax.swing.table.TableModel;
 
@@ -110,6 +110,7 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 	ButtonPopupMenuActionListener buttonPopupMenuActionListener = new ButtonPopupMenuActionListener();
 	ShowPopupMouseListener showPopupMouseListener = new ShowPopupMouseListener();
 	JToolBar toolBarTop = new JToolBar();
+	JToolBar toolBarButtom = new JToolBar();
 	RollOverButton btnCommit = new RollOverButton();
 	RollOverButton btnFilterSort = new RollOverButton();
 	RollOverButton btnImportTableData = new RollOverButton();
@@ -123,6 +124,8 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 	JCheckBox chkShowComment = new JCheckBox("論理名表示");
 	JTextField txtSearchColumn = new JTextField();
 	RollOverButton btnSearchColumn = new RollOverButton();
+	JComboBox cmbQuickFilter = new JComboBox();
+	JButton btnQuickFilterSearch = new JButton();
 	JButton btnLeftTopCorner = new JButton();
 	JButton btnLeftBottomCorner = new JButton();
 	PJDBDataTableRowHeader rowHeader = new PJDBDataTableRowHeader(tableDBTable);
@@ -156,6 +159,7 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 	int lastInsertRow = -1;
 
 	static boolean isShowComment = false;
+	static Map<String, Vector<String>> filterHistoryMap = new HashMap<String, Vector<String>>();
 
 	public PanelTableModify() {
 		try {
@@ -210,12 +214,46 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 		this.add(panelMainTable,  BorderLayout.CENTER);
 		panelMainTable.add(scpMainTable, BorderLayout.CENTER);
 		this.add(toolBarTop, BorderLayout.NORTH);
+		this.add(toolBarButtom, BorderLayout.SOUTH);
+		toolBarButtom.setLayout(new BorderLayout(5, 5));
+		toolBarButtom.add(cmbQuickFilter, BorderLayout.CENTER);
+		toolBarButtom.add(btnQuickFilterSearch, BorderLayout.EAST);
+		cmbQuickFilter.setEditable(true);
+		cmbQuickFilter.setBackground(SystemColor.control.brighter());
+		cmbQuickFilter.getEditor().addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                SwingUtilities.invokeLater(new Runnable() {
+                    public void run() {
+                        doQuickFilter();
+                    }
+                });
+            }
+        });
+//		cmbQuickFilter.getEditor().getEditorComponent().addKeyListener(new KeyAdapter() {
+//		    public void keyTyped(KeyEvent e) {
+//		        if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+//                    e.consume();
+//	                doQuickFilter();
+//		        }
+//		    }
+//		});
+		btnQuickFilterSearch.setIcon(iconFilterSort);
+		btnQuickFilterSearch.setText("フィルター");
+		btnQuickFilterSearch.setSize(100, 20);
+		btnQuickFilterSearch.setPreferredSize(new Dimension(100, 20));
+		btnQuickFilterSearch.setMaximumSize(new Dimension(100, 20));
+		btnQuickFilterSearch.addActionListener(new ActionListener() {
+            public void actionPerformed(ActionEvent e) {
+                doQuickFilter();
+            }
+        });
 		Border rollBorder = BorderFactory.createBevelBorder(BevelBorder.RAISED,
 										Color.white,
 										SystemColor.control,
 										SystemColor.control,
 										new Color(103, 101, 98));
 		scpMainTable.setRowHeaderView(rowHeader);
+		rowHeader.getSelectionModel().setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		rowHeader.getSelectionModel().addListSelectionListener(selectionRowListener);
 		rowHeader.addMouseListener(showPopupMouseListener);
 		btnLeftTopCorner.setIcon(iconEditOneRow);
@@ -286,6 +324,7 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
                 searchColumn();
             }
         });
+		toolBarButtom.setFloatable(false);
 		tableDBTable.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		tableDBTable.setColumnSelectionAllowed(true);
 		tableDBTable.getSelectionModel().addListSelectionListener(selectionRowListener);
@@ -389,6 +428,16 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 		this.tableName = tableName;
 
 		initViewStatus();
+		initFilterHistory();
+	}
+
+	void initFilterHistory() {
+	    Vector<String> filterList = filterHistoryMap.get(this.tableName);
+	    if (filterList != null) {
+    	    DefaultComboBoxModel modelQuickFilter = new DefaultComboBoxModel(filterList);
+    	    cmbQuickFilter.setModel(modelQuickFilter);
+    	    cmbQuickFilter.setSelectedItem("");
+	    }
 	}
 
 	/**g
@@ -432,7 +481,7 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 			boolean isFilterSuccess = ((Boolean) ret[2]).booleanValue();
 
 			if (!isFilterSuccess) {
-				MessageManager.showMessage("MCSTC202E", "Filter is wrong!");
+				MessageManager.showMessage("MCSTC202E", "フィルタ条件を確認してください。");
 				btnFilterSort.setIcon(iconFilterSortError);
 			} else {
 				if (FilterSortManager.hasFilterAndSort(Main.getMDIMain().currentConnURL, tableName)) {
@@ -512,7 +561,32 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 			// MessageManager.showMessage("MCSTC202E", se.getMessage());
 		}
 	}
+	
+	void doQuickFilter() {
+	    final String filter = (String) cmbQuickFilter.getSelectedItem();
+	    if (filter == null || "".equals(filter.trim())) {
+	        return;
+	    }
 
+        Vector<String> filterList = filterHistoryMap.get(this.tableName);
+        if (filterList == null) {
+            filterList = new Vector<String>();
+            filterHistoryMap.put(this.tableName, filterList);
+        }
+
+        if (!filterList.contains(filter)) {
+            filterList.add(0, filter);
+        }
+        DefaultComboBoxModel modelQuickFilter = new DefaultComboBoxModel(filterList);
+        cmbQuickFilter.setModel(modelQuickFilter);
+        cmbQuickFilter.setSelectedItem(filter);
+
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                resetData(null, filter);
+            }
+        });
+	}
 
 	/**
 	 * table selection listener
@@ -526,7 +600,9 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 				if (source == tableDBTable.getSelectionModel()) {
 					int selectedRow = tableDBTable.getSelectedRow();
 					if (rowHeader.getSelectedRow() != selectedRow && selectedRow >= 0) {
+					    rowHeader.getSelectionModel().removeListSelectionListener(selectionRowListener);
 						rowHeader.changeSelection(selectedRow, 0, false, false);
+						rowHeader.getSelectionModel().addListSelectionListener(selectionRowListener);
 					}
 
 					Runnable laterDo = new Runnable() {
@@ -536,12 +612,15 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 					};
 					SwingUtilities.invokeLater(laterDo);
 				} else if (source == rowHeader.getSelectionModel()) {
-					int selectedRow = rowHeader.getSelectedRow();
+					int[] selectedRows = rowHeader.getSelectedRows();
 
-					if (selectedRow >= 0) {
-						if (tableDBTable.getSelectedRow() != selectedRow) {
-							tableDBTable.changeSelection(selectedRow, 0, false, false);
-						}
+					if (selectedRows.length > 0) {
+                        tableDBTable.changeSelection(selectedRows[0], 0, false, false);
+					    for (int i : selectedRows) {
+					        tableDBTable.addRowSelectionInterval(i, i);
+					        tableDBTable.addColumnSelectionInterval(0, tableDBTable.getColumnCount() - 1);
+                        }
+					    tableDBTable.requestFocusInWindow();
 					} else {
 						tableDBTable.clearSelection();
 					}
@@ -1161,7 +1240,8 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 		}
 
 		if (!extraFilter.toString().equals("")) {
-			resetData(null, extraFilter.toString());
+			cmbQuickFilter.setSelectedItem(extraFilter.toString());
+			doQuickFilter();
 		}
 	}
 
@@ -1182,6 +1262,9 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 		String operatorValue = (String) cmbOperator.getSelectedItem();
 		try {
 			if (operatorValue.equals(operators[1])) {
+			    if (MessageManager.showMessage("MCSTC020Q") != JOptionPane.YES_OPTION) {
+			        return;
+			    }
 				DBParser.updateOneColumn(
 						Main.getMDIMain().getConnection(),
 						columnName,
@@ -1190,6 +1273,9 @@ public class PanelTableModify extends JPanel implements Refreshable, ParamTransf
 						tableName);
 				resetData();
 			} else if (inputValue != null && !inputValue.equals("") && type != java.lang.Object.class) {
+                if (MessageManager.showMessage("MCSTC020Q") != JOptionPane.YES_OPTION) {
+                    return;
+                }
 				DBParser.updateOneColumn(
 						Main.getMDIMain().getConnection(),
 						columnName,

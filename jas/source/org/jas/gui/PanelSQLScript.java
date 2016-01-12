@@ -776,10 +776,10 @@ public class PanelSQLScript extends JSplitPane {
             if (value instanceof Vector) {
                 Vector data = (Vector) value;
                 if (data != null && data.size() > 5) {
-                    String header = StringUtil.joinList((Vector) data.get(0), '\t');
+                    String header = joinList((Vector) data.get(0), '\t');
                     appendResultText(header);
                     for (int i = 5; i < data.size(); i++) {
-                        appendResultText(StringUtil.joinList((Vector) data.get(i), '\t'));
+                        appendResultText(joinList((Vector) data.get(i), '\t'));
                     }
                     appendResultText(StringUtil.getPadString("----------", '-', header.length()));
                     appendResultText((data.size() - 5) + "ŒŒŸõ‚µ‚Ü‚µ‚½B");
@@ -815,6 +815,29 @@ public class PanelSQLScript extends JSplitPane {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * join the row data list with the delimited char
+     *
+     */
+    String joinList(Vector rowVector, char sep) {
+        StringBuffer sb = new StringBuffer();
+
+        for (int i = 0; i < rowVector.size(); i++) {
+            if (rowVector.get(i) == null) {
+                sb.append("(null)");
+            } else if (rowVector.get(i) instanceof Vector) {
+                continue;
+            } else {
+                sb.append(rowVector.get(i).toString());
+            }
+            if (i < rowVector.size() - 2) {
+                sb.append(sep);
+            }
+        }
+
+        return sb.toString();
     }
 
     /**

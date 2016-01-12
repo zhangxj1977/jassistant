@@ -121,26 +121,26 @@ public class DialogImportTableData extends PJDialogBase {
         rdoImportFromFile.setBounds(new Rectangle(15, 25, 69, 18));
         rdoImportFromClipBoard.setText("Clipboard");
         rdoImportFromClipBoard.setBounds(new Rectangle(15, 46, 76, 25));
-        chkIncludeHeader.setText("Include Column Headers");
+        chkIncludeHeader.setText("1行名はカラム名");
         chkIncludeHeader.setBounds(new Rectangle(15, 76, 156, 25));
         chkIncludeHeader.setSelected(false);
         panelFormat.setBorder(titledBorder1);
         panelFormat.setBounds(new Rectangle(10, 125, 282, 80));
         panelFormat.setLayout(null);
         rdoFormatCommar.setBounds(new Rectangle(13, 19, 120, 19));
-        rdoFormatCommar.setText("Commar Delimited");
+        rdoFormatCommar.setText("カンマ(,)区切り");
         rdoFormatCommar.setToolTipText("");
         rdoFormatCommar.setMargin(new Insets(0, 0, 0, 0));
         rdoFormatTab.setToolTipText("");
-        rdoFormatTab.setText("Tab Delimited");
+        rdoFormatTab.setText("タブ区切り");
         rdoFormatTab.setBounds(new Rectangle(135, 19, 127, 19));
-        rdoFormatSQL.setBounds(new Rectangle(13, 47, 98, 19));
-        rdoFormatSQL.setText("SQL Script");
+        rdoFormatSQL.setBounds(new Rectangle(10, 47, 110, 19));
+        rdoFormatSQL.setText("インサートSQL");
         rdoFormatSQL.setToolTipText("");
-        rdoFormatOther.setBounds(new Rectangle(135, 47, 56, 19));
-        rdoFormatOther.setText("Other");
+        rdoFormatOther.setBounds(new Rectangle(135, 47, 80, 19));
+        rdoFormatOther.setText("その他");
         rdoFormatOther.setToolTipText("");
-        txtFormatOther.setBounds(new Rectangle(187, 47, 63, 21));
+        txtFormatOther.setBounds(new Rectangle(195, 47, 63, 21));
         getContentPane().add(panelContent);
         panelFrom.add(txtFilePath, null);
         panelFrom.add(btnBrowseFile, null);
@@ -174,6 +174,10 @@ public class DialogImportTableData extends PJDialogBase {
         btnCancel.addActionListener(buttonActionListener);
         btnAbort.addActionListener(buttonActionListener);
         btnBrowseFile.addActionListener(buttonActionListener);
+        
+        rdoImportFromClipBoard.setSelected(true);
+        rdoFormatTab.setSelected(true);
+        chkIncludeHeader.setSelected(true);
     }
 
     public void setVisible(boolean b) {
